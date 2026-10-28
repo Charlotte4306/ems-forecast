@@ -36,7 +36,24 @@ ems-forecast/
 └── requirements.txt
 ```
 
-## Cài đặt
+## Giao diện web
+
+Frontend trên `feat/demo` gồm Tổng quan, Dự báo nhu cầu và Kế hoạch năng lực.
+Dùng dữ liệu test thật, hỗ trợ Prophet/LSTM, MAE/RMSE/WAPE, phát lại theo giờ,
+bảng dữ liệu và xuất CSV. ARIMA, khoảng bất định và phân vùng chưa sẵn sàng.
+
+```powershell
+python -m ems.web
+```
+
+Mở `http://127.0.0.1:8501`. Không cần cài thư viện mô hình để chạy web khi đã có
+`outputs/web/dataset.json`. Khi thay checkpoint hoặc dữ liệu, xuất lại bằng
+`.\.venv\Scripts\python.exe -m ems.web.export` trong môi trường ML.
+
+Xem [triển khai lên emsforecast.live](deploy/README.md) và
+[quyết định thiết kế](web/DESIGN.md).
+
+## Cài đặt môi trường mô hình
 
 Chạy PowerShell tại project root:
 

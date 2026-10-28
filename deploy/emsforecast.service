@@ -1,0 +1,19 @@
+[Unit]
+Description=EMSForecast frontend and read-only demo API
+After=network.target
+
+[Service]
+Type=simple
+User=charlotte
+WorkingDirectory=/home/charlotte/apps/ems-forecast
+ExecStart=/usr/bin/python3 -m ems.web --host 127.0.0.1 --port 8501
+Environment=PYTHONUNBUFFERED=1
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

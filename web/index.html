@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#20384d">
+  <meta name="description" content="Phân tích nhu cầu dịch vụ cấp cứu theo giờ, đối chiếu mô hình và lập kịch bản năng lực phục vụ.">
+  <title>EMSForecast — Nhu cầu và năng lực phục vụ</title>
+  <link rel="icon" href="/assets/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/fonts.css">
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.mjs"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Đến nội dung chính</a>
+<header class="site-header">
+  <a class="brand" href="#overview" aria-label="EMSForecast, trang tổng quan"><img src="/assets/mark.svg" width="30" height="30" alt=""><span>EMS<span class="brand-light">Forecast</span></span></a>
+  <nav class="primary-nav" aria-label="Điều hướng chính">
+    <a href="#overview" data-page="overview" aria-current="page">Tổng quan</a>
+    <a href="#forecast" data-page="forecast">Dự báo nhu cầu</a>
+    <a href="#capacity" data-page="capacity">Kế hoạch năng lực</a>
+  </nav>
+  <div class="dataset-state"><span class="status-mark" aria-hidden="true"></span>Dữ liệu test 2026</div>
+</header>
+<div id="app-status" class="loading-message" role="status">Đang đọc dữ liệu đối chiếu mô hình…</div>
+<div id="workspace" hidden>
+  <main id="main" tabindex="-1">
+    <div class="page-heading"><div><p class="location-label">San Francisco / Toàn thành phố</p><h1 id="page-title">Diễn biến nhu cầu cấp cứu</h1><p id="page-description" class="page-description"></p></div><div class="scope-stamp"><span>Quan sát từ dữ liệu lịch sử</span><strong id="period-stamp"></strong></div></div>
+    <form class="filter-bar" id="filters">
+      <div class="filter-group"><label for="start-date">Từ ngày</label><input id="start-date" name="start" type="date" required></div>
+      <div class="filter-group"><label for="end-date">Đến ngày</label><input id="end-date" name="end" type="date" required></div>
+      <button class="button button-primary" type="submit">Xem dữ liệu</button>
+      <div class="filter-divider" aria-hidden="true"></div>
+      <div class="filter-group model-filter"><label for="model-select">Mô hình phân tích</label><select id="model-select"><option value="prophet">Prophet</option><option value="lstm">LSTM</option><option value="arima" disabled>ARIMA (chưa có mô hình)</option></select></div>
+      <button class="button button-quiet" id="full-period" type="button">Toàn bộ tập test</button>
+      <p class="filter-message" id="filter-message" aria-live="polite"></p>
+    </form>
+    <section id="screen" aria-labelledby="page-title"></section>
+    <footer class="site-footer"><span>EMSForecast <span class="footer-separator">/</span> Phân tích nhu cầu và năng lực phục vụ</span><button id="method-button" class="text-button">Dữ liệu & phương pháp</button></footer>
+  </main>
+</div>
+<dialog id="method-dialog" aria-labelledby="method-title"><div class="dialog-head"><h2 id="method-title">Dữ liệu & phương pháp</h2><button class="button button-quiet" id="close-method" aria-label="Đóng thông tin phương pháp">Đóng</button></div><div id="method-content"></div></dialog>
+<div class="toast" id="toast" role="status" hidden></div>
+</body>
+</html>
