@@ -1,4 +1,4 @@
-"""Run with: python -m src.prophet_train"""
+"""Run with: python -m ems.models.prophet.train"""
 import argparse
 import hashlib
 from importlib.metadata import version
@@ -10,9 +10,10 @@ import time
 import numpy as np
 import pandas as pd
 
-from src.prophet_data import ROOT, REGRESSORS, load_data
-from src.prophet_evaluate import compute_metrics, plot_predictions
-from src.prophet_model import SEED, build_model, predict, save_model
+from ems.data import ROOT, REGRESSORS, load_data
+from ems.evaluation import compute_metrics
+from ems.models.prophet.evaluate import plot_predictions
+from ems.models.prophet.model import SEED, build_model, predict, save_model
 
 
 def run_experiment(data_dir=ROOT / "data", output_dir=ROOT / "outputs/prophet",
@@ -83,12 +84,12 @@ def run_experiment(data_dir=ROOT / "data", output_dir=ROOT / "outputs/prophet",
     return metadata
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data-dir", type=Path, default=ROOT / "data")
     parser.add_argument("--output-dir", type=Path, default=ROOT / "outputs/prophet")
     parser.add_argument("--checkpoint-dir", type=Path, default=ROOT / "checkpoints/prophet")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     run_experiment(args.data_dir, args.output_dir, args.checkpoint_dir)
 
 

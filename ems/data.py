@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[1]
+from ems.paths import ROOT
 REGRESSORS = [
     "lag_1h", "lag_2h", "lag_3h", "lag_6h", "lag_12h", "lag_24h",
     "lag_48h", "lag_168h", "rolling_mean_24h", "rolling_std_24h",
@@ -12,11 +12,18 @@ REGRESSORS = [
 ]
 
 
-def load_split(data_dir: Path, split: str) -> pd.DataFrame:
+def read_split(data_dir: Path, split: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Read aligned raw features/target for either model family."""
     X = pd.read_csv(data_dir / f"X_{split}.csv")
     y = pd.read_csv(data_dir / f"y_{split}.csv")
     if len(X) != len(y) or len(X) < 2:
         raise ValueError(f"{split}: X/y must have equal lengths and at least two rows")
+    return X, y
+
+
+def load_split(data_dir: Path, split: str) -> pd.DataFrame:
+    """Prepare Prophet's timestamp/target/regressor table."""
+    X, y = read_split(data_dir, split)
     calendar = X[["year", "month", "day_of_month", "hour"]].rename(
         columns={"day_of_month": "day"}
     )

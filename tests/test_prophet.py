@@ -6,9 +6,9 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from src.prophet_data import REGRESSORS, load_data, load_split
-from src.prophet_evaluate import compute_metrics
-from src.prophet_model import predict
+from ems.data import REGRESSORS, load_data, load_split
+from ems.evaluation import compute_metrics
+from ems.models.prophet.model import predict
 
 
 class DataTests(unittest.TestCase):

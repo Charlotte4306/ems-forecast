@@ -22,7 +22,7 @@ Prophet mô hình hóa trend và mùa vụ ngày, tuần, năm. Có bốn ứng 
 - Seasonal Prophet với changepoint prior scale 0.01 hoặc 0.05.
 - Prophet có 14 regressors lag/rolling/EWM với prior scale 0.01 hoặc 0.05.
 
-Danh sách regressors nằm trong `src/prophet_data.py`. Không thêm toàn bộ
+Danh sách regressors nằm trong `ems/data.py`. Không thêm toàn bộ
 calendar/sin/cos vì Prophet đã biểu diễn mùa vụ từ timestamp. Không chuẩn hóa
 target bên ngoài; Prophet tự xử lý scaling nội bộ và chuẩn hóa regressors khi fit.
 Không dùng holiday trong thí nghiệm đầu tiên. Không tạo sequence 24/168 giờ vì
@@ -62,7 +62,7 @@ Từ thư mục gốc dự án, khuyến nghị Python 3.11 trở lên:
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
-.\.venv\Scripts\python.exe -m src.prophet_train
+.\.venv\Scripts\python.exe -m ems.models.prophet.train
 ```
 
 Notebook `notebooks/prophet_experiment.ipynb` gọi cùng pipeline, tránh hai bản
@@ -82,9 +82,9 @@ logic khác nhau. Chọn kernel của `.venv`. Có thể đăng ký kernel bằn
 - `checkpoints/prophet/best_model.json`: mô hình serialize theo API Prophet.
 - `checkpoints/prophet/metadata.json`: cấu hình và protocol đi kèm mô hình.
 
-Load lại bằng `src.prophet_model.load_model(Path(...))`; gọi `predict(model, frame)`
+Load lại bằng `ems.models.prophet.model.load_model(Path(...))`; gọi `predict(model, frame)`
 với `ds` và đúng regressors nếu mô hình sử dụng chúng. Không cần target để inference.
-Các artifact sinh ra và `.venv` được gitignore. Báo cáo metrics thực tế được tạo
+Các artifact sinh ra được lưu trong Git theo mô hình; `.venv` và bytecode được gitignore. Báo cáo metrics thực tế được tạo
 sau khi chạy; không dùng lại kết quả LSTM làm kết quả Prophet.
 
 ## Kết quả chạy kiểm chứng

@@ -5,7 +5,7 @@ import numpy as np
 from prophet import Prophet
 from prophet.serialize import model_from_json, model_to_json
 
-from src.prophet_data import REGRESSORS
+from ems.data import REGRESSORS
 
 SEED = 42
 
