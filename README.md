@@ -36,9 +36,6 @@ ems-forecast/
 └── requirements.txt
 ```
 
-Giữ `data/` vì đó là nguồn dữ liệu đang dùng trên `main`. Thiết kế cũ có
-`get_sf_ems.py` và `data_sf_ems/`, nhưng hai nhánh hiện chưa có script tải dữ liệu
-thô đó; phần này chưa được thêm trong đợt tích hợp.
 
 ## Cài đặt
 
@@ -96,6 +93,4 @@ là lịch sử, còn code cell đã được cập nhật theo package mới.
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
-Checkpoint và outputs được lưu trong Git theo mô hình. `.venv` và bytecode
-được gitignore. Xem [ghi chú tích hợp](reports/integration.md) về đổi đường dẫn
-và giới hạn khi so sánh hai mô hình.
+
