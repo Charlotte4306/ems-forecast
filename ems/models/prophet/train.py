@@ -87,10 +87,33 @@ def run_experiment(data_dir=ROOT / "data", output_dir=ROOT / "outputs/prophet",
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data-dir", type=Path, default=ROOT / "data")
-    parser.add_argument("--output-dir", type=Path, default=ROOT / "outputs/prophet")
-    parser.add_argument("--checkpoint-dir", type=Path, default=ROOT / "checkpoints/prophet")
+    parser.add_argument("--output-dir", type=Path, default=None)
+    parser.add_argument("--checkpoint-dir", type=Path, default=None)
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--forecast-24h", action="store_true",
+                        help="Evaluate saved checkpoint recursively over complete days; no training")
+    mode.add_argument("--select-24h", action="store_true",
+                      help="Fit four configurations on train, select on full 24h validation, no test")
+    parser.add_argument("--forecast-split", choices=("val", "test"), default="test")
+    parser.add_argument("--max-days", type=int, help="Limit the 24-hour backtest for a quick trial")
     args = parser.parse_args(argv)
-    run_experiment(args.data_dir, args.output_dir, args.checkpoint_dir)
+    if args.select_24h:
+        if args.max_days is not None or args.forecast_split != "test":
+            parser.error("--select-24h always uses full validation; no --max-days/--forecast-split")
+        from ems.models.prophet.select_24h import select_day_ahead
+        select_day_ahead(args.data_dir,
+                        args.output_dir or ROOT / "outputs/prophet/day_ahead_24h/selection",
+                        args.checkpoint_dir or ROOT / "checkpoints/prophet/day_ahead_24h")
+    elif args.forecast_24h:
+        from ems.models.prophet.forecast import run_day_ahead
+        output = args.output_dir or ROOT / "outputs/prophet/day_ahead_24h" / args.forecast_split
+        run_day_ahead(args.data_dir, args.checkpoint_dir or ROOT / "checkpoints/prophet", output,
+                     args.forecast_split, args.max_days)
+    else:
+        if args.max_days is not None or args.forecast_split != "test":
+            parser.error("--max-days and --forecast-split require --forecast-24h")
+        run_experiment(args.data_dir, args.output_dir or ROOT / "outputs/prophet",
+                       args.checkpoint_dir or ROOT / "checkpoints/prophet")
 
 
 if __name__ == "__main__":

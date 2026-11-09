@@ -59,6 +59,26 @@ Fit bốn cấu hình trên train, chọn theo MAE validation, đánh giá test 
 artifact trong `checkpoints/prophet/`, `outputs/prophet/`.
 Xem [báo cáo Prophet](reports/prophet.md).
 
+Dự báo trước cả ngày từ checkpoint hiện có, không huấn luyện lại:
+
+```powershell
+.\.venv\Scripts\python.exe main.py prophet --forecast-24h
+```
+
+Kết quả lưu riêng tại `outputs/prophet/day_ahead_24h/test/`. Các lag, rolling và
+EWM được cập nhật bằng dự báo trong mỗi khối; chỉ nhận thực tế sau cả ngày.
+Có thể thử nhanh với `--forecast-split val --max-days 2`.
+Lệnh trên đánh giá bổ sung checkpoint đã chọn theo chế độ một giờ.
+Để huấn luyện và chọn riêng bốn cấu hình theo MAE validation 24 giờ, không đánh giá test:
+
+```powershell
+.\.venv\Scripts\python.exe main.py prophet --select-24h
+```
+
+Checkpoint mới được lưu riêng tại `checkpoints/prophet/day_ahead_24h/`;
+bảng so sánh tại `outputs/prophet/day_ahead_24h/selection/`. Xem
+[quy trình và giới hạn dự báo 24 giờ](reports/prophet_24h.md).
+
 ## Chạy SARIMAX
 
 Đánh giá CSV đã có và tạo lại bảng chi phí, lịch nhân sự, bốn biểu đồ; không huấn luyện:
