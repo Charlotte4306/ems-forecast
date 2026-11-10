@@ -1,0 +1,46 @@
+{
+  "source_predictions": "D:\\od\\abgame\\ems-forecast\\outputs\\sarimax\\norefit\\pred_sarimax.csv",
+  "assumptions": {
+    "calls_per_dispatcher_hour": 3.0,
+    "excess_cost_per_person_hour_usd": 30.0,
+    "shortage_cost_per_person_hour_usd": 75.0,
+    "history_window_hours": 61200
+  },
+  "limitations": "Illustrative dispatcher-hour scenario, not actual costs, staffing roster optimization, waiting-time SLA or ambulance fleet needs. The upper endpoint of a central 80% interval is the nominal 90th percentile, not an 80% service-level guarantee.",
+  "all_test": {
+    "rows": 6796,
+    "MAE": 3.0124863148235677,
+    "RMSE": 3.8912842677290884,
+    "MAPE (%)": 33.252348177635,
+    "R2": 0.38785696925373336,
+    "WAPE (%)": 25.80135226538913,
+    "coverage_80 (%)": 82.2248381400824,
+    "mean_interval_width": 10.10555407760485
+  },
+  "lstm_seq24_aligned": {
+    "rows": 6772,
+    "MAE": 3.006788576737524,
+    "RMSE": 3.876556983184022,
+    "MAPE (%)": 33.26453040242773,
+    "R2": 0.3922514483430143,
+    "WAPE (%)": 25.76779873915353,
+    "coverage_80 (%)": 82.26520968694625,
+    "mean_interval_width": 10.105548012975838
+  },
+  "baselines": {
+    "Seasonal Naive (168h)": {
+      "MAE": 4.113596233078281,
+      "RMSE": 5.308521473577422,
+      "MAPE (%)": 43.94617263345999,
+      "R2": -0.13923717945454617,
+      "WAPE (%)": 35.232141956949135
+    },
+    "Lịch sử Giờ x Thứ": {
+      "MAE": 3.008030670076535,
+      "RMSE": 3.891408130324651,
+      "MAPE (%)": 32.936995647811116,
+      "R2": 0.38781799865885647,
+      "WAPE (%)": 25.7631905452439
+    }
+  }
+}

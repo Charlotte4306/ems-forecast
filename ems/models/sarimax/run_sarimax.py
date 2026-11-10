@@ -29,7 +29,10 @@ def fit_model(series, order, K, maxiter, optimizer="powell"):
 
 def run_experiment(data_dir=DATA_DIR, output_dir=OUTPUT_DIR / "sarimax",
                    checkpoint_dir=CHECKPOINT_DIR / "sarimax", window_hours=8760,
-                   horizon=24, maxiter=300, candidates=GRID, optimizer="powell"):
+                   horizon=24, maxiter=300, candidates=GRID, optimizer="powell", refit=True):
+    """refit=False keeps the parameters fitted on the train window (like Prophet/LSTM,
+    which are not refitted after validation); validation is only fed through the
+    Kalman filter so the state is current when the test period starts."""
     if window_hours < 168 or not 1 <= horizon <= 168 or maxiter < 1:
         raise ValueError("window_hours >= 168, 1 <= horizon <= 168 and maxiter >= 1 required; seasonal lag-168 baseline must be available at each block origin")
     if optimizer not in ("powell", "lbfgs"):
@@ -53,6 +56,7 @@ def run_experiment(data_dir=DATA_DIR, output_dir=OUTPUT_DIR / "sarimax",
             row.update(status="ok", AIC=float(fitted.aic), **metrics(prediction))
             if best is None or row["MAE"] < best["MAE"]:
                 best = {"order": tuple(order), "K": K, "MAE": row["MAE"]}
+                best_fitted = fitted
             print(f"  MAE={row['MAE']:.6f}", flush=True)
         except RuntimeError as error:
             row.update(status="failed", error=str(error))
@@ -62,9 +66,22 @@ def run_experiment(data_dir=DATA_DIR, output_dir=OUTPUT_DIR / "sarimax",
         pd.DataFrame(records).to_csv(output_dir / "validation_results.csv", index=False)
     if best is None:
         raise RuntimeError("No converged validation candidate; inspect validation_results.csv")
-    history = pd.concat([splits["train"], validation]).iloc[-window_hours:]
-    print(f"Final fit: order={best['order']}, K={best['K']}", flush=True)
-    fitted = fit_model(history, best["order"], best["K"], maxiter, optimizer)
+    if refit:
+        history = pd.concat([splits["train"], validation]).iloc[-window_hours:]
+        print(f"Final fit: order={best['order']}, K={best['K']}", flush=True)
+        fitted = fit_model(history, best["order"], best["K"], maxiter, optimizer)
+        converged = bool(fitted.mle_retvals["converged"])
+        fit_rows = history
+        protocol = "Fit latest train window; select on validation; refit latest train+validation window; forecast consecutive blocks, update state after observing each block, fixed parameters."
+    else:
+        # Same parameters as validation; only the state is updated with 2025 observations.
+        history = pd.concat([training, validation])
+        print(f"No refit: order={best['order']}, K={best['K']}, parameters from train window", flush=True)
+        converged = bool(best_fitted.mle_retvals["converged"])
+        fitted = best_fitted.extend(validation, exog=make_exog(validation.index, best["K"]),
+                                    validate_specification=False)
+        fit_rows = training
+        protocol = "Fit latest train window; select on validation; no refit (parameters fixed from train window), validation observations only update the filter state; forecast consecutive test blocks, update state after observing each block."
     prediction = rolling_forecast(fitted, test, make_exog(test.index, best["K"]), horizon)
     prediction.rename_axis("timestamp").to_csv(output_dir / "pred_sarimax.csv")
     comparison = {name: metrics(pd.DataFrame({"actual": test, "pred": values}))
@@ -72,13 +89,13 @@ def run_experiment(data_dir=DATA_DIR, output_dir=OUTPUT_DIR / "sarimax",
     metadata = {
         "selected": best, "selection_metric": "full-precision validation MAE",
         "window_hours": window_hours, "horizon_hours": horizon, "maxiter": maxiter, "optimizer": optimizer,
-        "interval_level": 0.8, "converged": bool(fitted.mle_retvals["converged"]),
-        "protocol": "Fit latest train window; select on validation; refit latest train+validation window; forecast consecutive blocks, update state after observing each block, fixed parameters.",
+        "interval_level": 0.8, "converged": converged, "refit": refit,
+        "protocol": protocol,
         "time_convention": "Naive timestamps preserved from input calendar columns; no timezone conversion.",
         "comparability": "Prophet/LSTM artifacts use a different training cutoff and one-hour evaluation protocol; aligned timestamps alone do not make protocols equivalent.",
         "splits": {name: {"rows": len(values), "start": str(values.index[0]), "end": str(values.index[-1])}
                    for name, values in splits.items()},
-        "final_fit": {"rows": len(history), "start": str(history.index[0]), "end": str(history.index[-1])},
+        "final_fit": {"rows": len(fit_rows), "start": str(fit_rows.index[0]), "end": str(fit_rows.index[-1])},
         "test_metrics": {"all_test": metrics(prediction), "lstm_seq24_aligned": metrics(prediction.iloc[24:])},
         "baselines": comparison,
         "versions": {name: version(name) for name in ("statsmodels", "pandas", "numpy", "scipy")},
@@ -92,7 +109,8 @@ def run_experiment(data_dir=DATA_DIR, output_dir=OUTPUT_DIR / "sarimax",
     fitted.save(checkpoint_dir / "best_model.pkl")
     write_json(checkpoint_dir / "metadata.json", metadata)
     write_json(output_dir / "metrics.json", metadata)
-    run_capacity(data_dir, output_dir / "pred_sarimax.csv", output_dir, window_hours=window_hours)
+    # Calendar baseline in the capacity report uses the same history as the metric baselines.
+    run_capacity(data_dir, output_dir / "pred_sarimax.csv", output_dir, window_hours=len(history))
     print(json.dumps(metadata["test_metrics"], indent=2), flush=True)
     return metadata
 
@@ -107,6 +125,8 @@ def main(argv=None):
     parser.add_argument("--maxiter", type=int, default=300)
     parser.add_argument("--optimizer", choices=("powell", "lbfgs"), default="powell",
                         help="Powell default avoids the non-converging L-BFGS fit observed on this dataset")
+    parser.add_argument("--no-refit", action="store_true",
+                        help="Keep train-window parameters for test (same protocol as Prophet/LSTM)")
     parser.add_argument("--evaluate-only", action="store_true", help="Evaluate saved CSV and regenerate capacity reports without fitting")
     args = parser.parse_args(argv)
     if args.evaluate_only:
@@ -115,7 +135,8 @@ def main(argv=None):
                      window_hours=args.window_hours)
     else:
         run_experiment(args.data_dir, args.output_dir, args.checkpoint_dir,
-                       args.window_hours, args.horizon, args.maxiter, optimizer=args.optimizer)
+                       args.window_hours, args.horizon, args.maxiter, optimizer=args.optimizer,
+                       refit=not args.no_refit)
 
 
 if __name__ == "__main__":
