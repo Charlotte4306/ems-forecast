@@ -1,0 +1,41 @@
+{
+  "unit_type": "MEDIC",
+  "duration_definition": "available_dttm - dispatch_dttm, minutes",
+  "calibration_start_inclusive": "2025-01-01 00:00:00",
+  "calibration_end_exclusive": "2026-01-01 00:00:00",
+  "not_usable_for_forecast_origins_before": "2026-01-01 00:00:00",
+  "known_duration_rule": "Dispatch in calibration window and available <= calibration end",
+  "max_busy_hours_for_calibration": 24,
+  "max_dispatch_delay_hours_for_calibration": 24,
+  "busy_time": {
+    "count": 99694,
+    "mean_minutes": 63.380519222153126,
+    "std_minutes": 40.91351741013789,
+    "min_minutes": 0.016666666666666666,
+    "p25_minutes": 21.016666666666666,
+    "p50_minutes": 70.26666666666667,
+    "p75_minutes": 91.35,
+    "p90_minutes": 110.63333333333334,
+    "p95_minutes": 123.63333333333334,
+    "p99_minutes": 157.85,
+    "max_minutes": 467.26666666666665
+  },
+  "dispatch_delay": {
+    "count": 100318,
+    "mean_minutes": 3.9523005176870885,
+    "std_minutes": 11.163679093775837,
+    "min_minutes": 0.0,
+    "p25_minutes": 1.35,
+    "p50_minutes": 2.4166666666666665,
+    "p75_minutes": 3.75,
+    "p90_minutes": 6.021666666666715,
+    "p95_minutes": 10.233333333333333,
+    "p99_minutes": 36.2,
+    "max_minutes": 1420.75
+  },
+  "mean_service_rate_per_vehicle_hour": 0.9466631188314477,
+  "note_service_rate": "Descriptive inverse mean only; does not validate exponential service or an Erlang-C model",
+  "time_convention": "Naive local timestamps preserved; DST ambiguity unresolved",
+  "financial_costs_available": false,
+  "on_duty_roster_available": false
+}

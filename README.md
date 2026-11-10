@@ -108,6 +108,20 @@ Có thể đổi vị trí bằng `--output-dir` và `--checkpoint-dir`.
 SARIMAX dùng chân trời và dữ liệu fit cuối khác Prophet/LSTM; xem
 [quy trình và giới hạn so sánh](reports/sarimax.md).
 
+## Chuẩn bị thời gian xe MEDIC bận từ raw
+
+Module độc lập dùng chung cho phần năng lực xe, không thay đổi dữ liệu dự báo:
+
+```powershell
+.\.venv\Scripts\python.exe -m ems.capacity.prepare_busy_time --raw-files "C:\duong-dan-raw\sf_ems_2025.csv" "C:\duong-dan-raw\sf_ems_2026.csv"
+```
+
+Thay đường dẫn bằng vị trí raw thực tế. Kết quả tại `outputs/capacity/medic_busy_time/`:
+thời lượng từng lượt, các cờ kiểm tra, tham số lịch sử, khoảng bận đã gộp theo xe
+và khối lượng xe bận theo giờ. Mặc định hiệu chỉnh từ 2025 cho thời điểm dự báo
+từ đầu 2026; không dùng ngược cho validation 2025. Xem
+[quy tắc xử lý và kết quả kiểm tra](reports/medic_busy_time.md).
+
 ## Chạy LSTM
 
 Dùng checkpoint Vanilla seq24 đã tích hợp để đánh giá, không train lại:

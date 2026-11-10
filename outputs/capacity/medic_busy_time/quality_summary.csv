@@ -1,0 +1,3 @@
+source_file,medic_rows,unique_calls,distinct_unit_ids_in_period,duplicate_record,conflicting_assignment_key,missing_assignment_id,missing_received_dttm,invalid_received_dttm,missing_dispatch_dttm,invalid_dispatch_dttm,missing_available_dttm,invalid_available_dttm,negative_busy_time,zero_busy_time,short_busy_time_under_1_minute,long_busy_time,negative_dispatch_delay,dispatch_delay_over_24h,usable_assignment,usable_busy_interval,eligible_busy_calibration,in_busy_calibration,in_delay_calibration
+sf_ems_2025.csv,100320,94420,55,0,0,0,0,0,0,0,1,0,606,5,2214,0,1,1,100320,99708,99708,99694,100318
+sf_ems_2026.csv,79348,74881,62,0,0,0,0,0,0,0,5,0,416,5,1567,0,0,0,79348,78922,78922,0,0
