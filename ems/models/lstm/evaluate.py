@@ -49,6 +49,45 @@ def predict(model: nn.Module, loader: DataLoader,
     return y_true, y_pred
 
 
+def predict_24h_blocks(model: nn.Module, loader: DataLoader,
+                       tgt_scaler, n_target_hours: int = 6796) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Chạy inference theo khối 24 giờ (24-Hour Block Prediction).
+    Mỗi block dự báo cùng lúc cả 24 giờ tới mà không quan sát actual bên trong ngày.
+
+    Returns:
+        y_true: (n_target_hours,) actual call_count (giá trị thực tế)
+        y_pred: (n_target_hours,) predicted call_count (giá trị dự báo block)
+    """
+    model.eval()
+    preds_list, true_list = [], []
+
+    with torch.no_grad():
+        for X_batch, y_batch in loader:
+            X_batch = X_batch.to(DEVICE)
+            p = model(X_batch).cpu().numpy()     # (batch, 24)
+            preds_list.append(p)
+            true_list.append(y_batch.numpy())    # (batch, 24)
+
+    y_pred_sc = np.concatenate(preds_list, axis=0)   # (n_blocks, 24)
+    y_true_sc = np.concatenate(true_list,  axis=0)   # (n_blocks, 24)
+
+    # Flatten thành dạng (N, 1) để inverse_transform
+    y_pred_flat = y_pred_sc.reshape(-1, 1)
+    y_true_flat = y_true_sc.reshape(-1, 1)
+
+    y_pred = tgt_scaler.inverse_transform(y_pred_flat).flatten()
+    y_true = tgt_scaler.inverse_transform(y_true_flat).flatten()
+
+    # Cắt vừa đúng số giờ test thực tế (ví dụ 6.796 giờ) và clip không âm
+    if n_target_hours is not None and len(y_pred) >= n_target_hours:
+        y_pred = y_pred[:n_target_hours]
+        y_true = y_true[:n_target_hours]
+
+    y_pred = np.clip(y_pred, 0, None)
+    return y_true, y_pred
+
+
 # ─────────────────────────────────────────────
 # 2. Metrics
 # ─────────────────────────────────────────────
@@ -184,8 +223,8 @@ def plot_predictions(y_true: np.ndarray, y_pred: np.ndarray,
 def plot_comparison(results: Dict[str, Dict],
                     save: bool = True):
     """
-    So sánh các model theo MAE, RMSE, R².
-    results = {"vanilla_seq24": {"MAE": ..., "RMSE": ..., "R²": ..., "MAPE (%)": ...}, ...}
+    So sánh các model theo MAE, RMSE, R², MAPE (%).
+    Tự động chuẩn hóa giữa 'R²' và 'R2' để tránh KeyError.
     """
     _setup_style()
     models  = list(results.keys())
@@ -196,16 +235,25 @@ def plot_comparison(results: Dict[str, Dict],
     fig.patch.set_facecolor("#0f1117")
 
     for ax, metric, color in zip(axes, metrics, colors):
-        vals = [results[m][metric] for m in models]
+        vals = []
+        for m in models:
+            val = results[m].get(metric)
+            if val is None and metric == "R²":
+                val = results[m].get("R2", 0.0)
+            elif val is None and metric == "R2":
+                val = results[m].get("R²", 0.0)
+            vals.append(val if val is not None else 0.0)
+
         bars = ax.bar(models, vals, color=color, alpha=0.8, width=0.5)
         ax.set_title(metric, fontsize=12)
         ax.set_ylabel(metric)
-        ax.tick_params(axis="x", rotation=20)
+        ax.tick_params(axis="x", rotation=25)
         ax.grid(True, axis="y", alpha=0.4)
         for bar, v in zip(bars, vals):
+            y_pos = bar.get_height() + (0.01 if v >= 0 else -0.05)
             ax.text(bar.get_x() + bar.get_width() / 2,
-                    bar.get_height() * 1.02,
-                    f"{v:.3f}", ha="center", va="bottom", fontsize=9)
+                    y_pos,
+                    f"{v:.3f}", ha="center", va="bottom" if v >= 0 else "top", fontsize=8)
 
     fig.suptitle("Model Comparison", fontsize=14, color="#e6edf3",
                  fontweight="bold")
@@ -233,11 +281,14 @@ def naive_baseline(y_true: np.ndarray) -> Dict:
 
 
 def evaluate_all(model: nn.Module, test_dl: DataLoader,
-                 tgt_scaler, run_name: str, history: Dict):
+                 tgt_scaler, run_name: str, history: Dict,
+                 predict_fn=predict, **kwargs):
     """
     Convenience wrapper: predict → metrics → plots.
+    Hỗ trợ cả 1-hour rolling (mặc định predict_fn=predict)
+    và 24-hour block (predict_fn=predict_24h_blocks).
     """
-    y_true, y_pred = predict(model, test_dl, tgt_scaler)
+    y_true, y_pred = predict_fn(model, test_dl, tgt_scaler, **kwargs)
     metrics = compute_metrics(y_true, y_pred)
     print_metrics(metrics, run_name)
     plot_loss_curve(history, run_name)

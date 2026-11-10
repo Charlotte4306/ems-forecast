@@ -4,6 +4,8 @@ create_notebook.py — Tạo 2 Jupyter Notebooks độc lập:
 2. notebooks/queueing_theory.ipynb  : Lý thuyết Hàng đợi & Hoạch định số xe cứu thương
 """
 import os
+import sys
+import shutil
 from pathlib import Path
 import nbformat as nbf
 
@@ -13,7 +15,8 @@ if hasattr(sys.stdout, "reconfigure"):
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
-NOTEBOOKS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "notebooks")
+# Script nằm trong scripts/ → notebooks/ ở thư mục gốc dự án
+NOTEBOOKS_DIR = str(Path(__file__).resolve().parents[1] / "notebooks")
 os.makedirs(NOTEBOOKS_DIR, exist_ok=True)
 
 
@@ -39,8 +42,8 @@ Notebook này tập trung vào pipeline Machine Learning & Deep Learning:
 > 📌 **Lưu ý**: Để xem phần **Lý thuyết Hàng đợi & Hoạch định Đội xe** (biến dự báo $\\hat{\\lambda}(t)$ thành số xe cần $s(t)$), vui lòng mở notebook riêng: [`queueing_theory.ipynb`](queueing_theory.ipynb).
 """))
 
-# ── Cell 1: Setup & imports ──────────────────────────────────────────────
-cells.append(nbf.v4.new_code_cell("""\
+    # ── Cell 1: Setup & imports ──────────────────────────────────────────────
+    cells.append(nbf.v4.new_code_cell("""\
 from pathlib import Path
 import sys, os
 ROOT = Path.cwd().resolve()
@@ -236,11 +239,79 @@ y_true_att, y_pred_att, metrics_att = evaluate_all(model_att, test_dl_24, tgt_sc
         nbf.write(nb, f)
     print(f"[OK] Notebook saved: {out_path}")
 
-# Save
-out_path = os.path.join(
-    str(Path(__file__).resolve().parents[1]),
-    "notebooks",
-    "lstm_experiment.ipynb"
+
+# ==============================================================================
+# NOTEBOOK 2: QUEUEING THEORY (Hoạch định Đội xe EMS độc lập)
+# ==============================================================================
+def create_queueing_theory_notebook():
+    nb = nbf.v4.new_notebook()
+    cells = []
+
+    # ── Cell 0: Title markdown ───────────────────────────────────────────────
+    cells.append(nbf.v4.new_markdown_cell("""# 🚑 EMS Capacity Planning — Queueing Theory
+**Ứng dụng Lý thuyết Hàng đợi để Biến Dự báo Nhu cầu $\\hat{\\lambda}(t)$ thành Số lượng Xe Cứu thương Cần thiết $s(t)$**
+
+---
+
+### 1. Đặt vấn đề
+Trong quản lý dịch vụ khẩn cấp (Emergency Medical Services — EMS):
+* Dự báo số lượng cuộc gọi $\\hat{\\lambda}(t)$ chỉ là bước đầu.
+* **Yêu cầu thực tiễn của nhà điều hành**: Cần bố trí **bao nhiêu xe trực chiến mỗi giờ** $s(t)$?
+  * Nếu bố trí **quá ít**: Bệnh nhân phải chờ đợi lâu, nguy cơ tử vong tăng cao, hoặc phải xin chi viện từ quận khác (mutual aid).
+  * Nếu bố trí **quá nhiều**: Lãng phí chi phí vận hành, ngân sách và nhân lực y tế.
+
+### 2. Cơ sở Lý thuyết
+#### A. Định luật Little — Tính tải Erlang $a(t)$:
+Tải phục vụ trung bình (tính bằng đơn vị Erlang, đại diện cho số xe bận cùng lúc):
+$$a(t) = \\hat{\\lambda}(t) \\times u \\times E[S]$$
+* $\\hat{\\lambda}(t)$: Tốc độ cuộc gọi đến tại giờ $t$ (cuộc gọi/giờ).
+* $u$: Số xe cứu thương trung bình được điều phối cho mỗi cuộc gọi (xe/cuộc gọi).
+* $E[S]$: Thời gian bận trung bình của một xe trong một ca cấp cứu (giờ/xe).
+
+#### B. Mô hình Hàng đợi EMS: M/M/s/s Loss System (Erlang B)
+* Hệ thống EMS là mô hình **không xếp hàng chờ vô hạn**: Khi tất cả $s$ xe đều bận, cuộc gọi khẩn cấp sẽ bị từ chối hoặc chuyển tuyến sang trạm/đơn vị khác (blocking/loss).
+* Ta áp dụng **3 tiêu chuẩn vận hành** để xác định số xe $s(t)$:
+  1. **Tiêu chí 1 — Hệ số sử dụng $\\rho \\le 0.80$**: $s = \\lceil a / 0.80 \\rceil$. Khi $\\rho > 0.85$, hệ thống rơi vào vùng bất ổn định phi tuyến.
+  2. **Tiêu chí 2 — Công thức mất cuộc gọi Erlang B $\\le 5\\%$**: Xác suất tất cả $s$ xe đều bận $B(s, a) \\le 0.05$.
+  3. **Tiêu chí 3 — Phân vị Poisson 98%**: Do số xe bận tại bất kỳ thời điểm nào tuân theo phân phối Poisson($a$), ta chọn $s = \\lceil a + 2.05 \\sqrt{a} \\rceil$ để bảo đảm đủ xe trong $98\\%$ tình huống ngẫu nhiên.
+"""))
+
+    # ── Cell 1: Setup & Imports ──────────────────────────────────────────────
+    cells.append(nbf.v4.new_code_cell("""\
+from pathlib import Path
+import sys, os
+ROOT = Path.cwd().resolve()
+if not (ROOT / "ems").is_dir():
+    ROOT = ROOT.parent
+if not (ROOT / "ems").is_dir():
+    raise RuntimeError("Run from project root or notebooks directory")
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams["figure.dpi"] = 120
+
+from ems.models.lstm.config     import DATA_DIR, OUTPUT_DIR, TARGET_COL, N_FEATURES, \\
+                                       HIDDEN_SIZE, NUM_LAYERS, DROPOUT, BATCH_SIZE
+from ems.models.lstm.preprocess import build_dataloaders
+from ems.models.lstm.model      import build_model
+from ems.models.lstm.train      import load_checkpoint
+from ems.models.lstm.evaluate   import predict, compute_metrics, print_metrics, naive_baseline
+from ems.queuing                import (
+    estimate_service_params,
+    compute_erlang_load,
+    vehicles_utilization,
+    vehicles_erlang_b,
+    vehicles_poisson_quantile,
+    forecast_to_vehicles,
+    summarize_vehicles,
+    print_summary,
+    plot_vehicles_timeline,
+    plot_hourly_profile,
+    plot_model_comparison,
 )
 
 print("Environment ready! Imports successful.")

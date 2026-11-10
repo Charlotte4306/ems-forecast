@@ -20,18 +20,22 @@ class VanillaLSTM(nn.Module):
         → LSTM (hidden_size, num_layers, dropout)
         → lấy hidden state ở bước cuối
         → FC(hidden → fc_size) → ReLU → Dropout
-        → FC(fc_size → 1)
-        Output (batch, 1)
+        → FC(fc_size → forecast_horizon)
+        Output (batch, forecast_horizon)
+          - forecast_horizon = 1  : 1-hour rolling prediction
+          - forecast_horizon = 24 : 24-hour block prediction
     """
     def __init__(
         self,
-        n_features:  int   = 34,
-        hidden_size: int   = 128,
-        num_layers:  int   = 2,
-        dropout:     float = 0.2,
-        fc_size:     int   = 64,
+        n_features:       int   = 34,
+        hidden_size:      int   = 128,
+        num_layers:       int   = 2,
+        dropout:          float = 0.2,
+        fc_size:          int   = 64,
+        forecast_horizon: int   = 1,
     ):
         super().__init__()
+        self.forecast_horizon = forecast_horizon
         self.lstm = nn.LSTM(
             input_size=n_features,
             hidden_size=hidden_size,
@@ -43,14 +47,14 @@ class VanillaLSTM(nn.Module):
             nn.Linear(hidden_size, fc_size),
             nn.ReLU(),
             nn.Dropout(dropout),
-            nn.Linear(fc_size, 1),
+            nn.Linear(fc_size, forecast_horizon),
         )
 
     def forward(self, x):
         # x: (batch, seq_len, n_features)
         out, _ = self.lstm(x)           # out: (batch, seq_len, hidden)
         last = out[:, -1, :]            # lấy timestep cuối: (batch, hidden)
-        return self.fc(last)            # (batch, 1)
+        return self.fc(last)            # (batch, forecast_horizon)
 
 
 # ─────────────────────────────────────────────
@@ -63,13 +67,15 @@ class StackedBiLSTM(nn.Module):
     """
     def __init__(
         self,
-        n_features:  int   = 34,
-        hidden_size: int   = 128,
-        num_layers:  int   = 2,
-        dropout:     float = 0.3,
-        fc_size:     int   = 64,
+        n_features:       int   = 34,
+        hidden_size:      int   = 128,
+        num_layers:       int   = 2,
+        dropout:          float = 0.3,
+        fc_size:          int   = 64,
+        forecast_horizon: int   = 1,
     ):
         super().__init__()
+        self.forecast_horizon = forecast_horizon
         self.lstm = nn.LSTM(
             input_size=n_features,
             hidden_size=hidden_size,
@@ -82,7 +88,7 @@ class StackedBiLSTM(nn.Module):
             nn.Linear(hidden_size * 2, fc_size),
             nn.ReLU(),
             nn.Dropout(dropout),
-            nn.Linear(fc_size, 1),
+            nn.Linear(fc_size, forecast_horizon),
         )
 
     def forward(self, x):
@@ -126,13 +132,15 @@ class AttentionLSTM(nn.Module):
     """
     def __init__(
         self,
-        n_features:  int   = 34,
-        hidden_size: int   = 128,
-        num_layers:  int   = 2,
-        dropout:     float = 0.2,
-        fc_size:     int   = 64,
+        n_features:       int   = 34,
+        hidden_size:      int   = 128,
+        num_layers:       int   = 2,
+        dropout:          float = 0.2,
+        fc_size:          int   = 64,
+        forecast_horizon: int   = 1,
     ):
         super().__init__()
+        self.forecast_horizon = forecast_horizon
         self.lstm = nn.LSTM(
             input_size=n_features,
             hidden_size=hidden_size,
@@ -145,7 +153,7 @@ class AttentionLSTM(nn.Module):
             nn.Linear(hidden_size, fc_size),
             nn.ReLU(),
             nn.Dropout(dropout),
-            nn.Linear(fc_size, 1),
+            nn.Linear(fc_size, forecast_horizon),
         )
 
     def forward(self, x):
