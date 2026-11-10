@@ -73,8 +73,8 @@ print_metrics(naive_m, run_name="Naive Lag-1")
 print("\n[4] Ước lượng tham số dịch vụ...")
 params = estimate_service_params(
     raw_df=None,
-    default_E_S_hr=0.60,   # 36 phút bận / xe
-    default_u=1.35,         # xe / cuộc gọi
+    default_E_S_hr=63.38 / 60,  # 63,38 phút bận / lượt xe MEDIC (raw 2025, available − dispatch)
+    default_u=1.0,              # call_count đã đếm lượt điều xe → không nhân thêm
 )
 
 # ── 5. Tính số xe cần theo 3 tiêu chí ─────────────────────────────────
