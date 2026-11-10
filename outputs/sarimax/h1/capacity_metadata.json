@@ -4,28 +4,28 @@
     "calls_per_dispatcher_hour": 3.0,
     "excess_cost_per_person_hour_usd": 30.0,
     "shortage_cost_per_person_hour_usd": 75.0,
-    "history_window_hours": 8760
+    "history_window_hours": 61200
   },
   "limitations": "Illustrative dispatcher-hour scenario, not actual costs, staffing roster optimization, waiting-time SLA or ambulance fleet needs. The upper endpoint of a central 80% interval is the nominal 90th percentile, not an 80% service-level guarantee.",
   "all_test": {
     "rows": 6796,
-    "MAE": 2.9961912282612553,
-    "RMSE": 3.859937299878307,
-    "MAPE (%)": 33.056853920608,
-    "R2": 0.3976797100224895,
-    "WAPE (%)": 25.66178805674181,
-    "coverage_80 (%)": 81.76868746321365,
-    "mean_interval_width": 9.862364982465824
+    "MAE": 3.0161639059953056,
+    "RMSE": 3.8777608592662265,
+    "MAPE (%)": 33.67252565639263,
+    "R2": 0.3921043461735091,
+    "WAPE (%)": 25.832850109825195,
+    "coverage_80 (%)": 81.41553855208946,
+    "mean_interval_width": 9.925323426244393
   },
   "lstm_seq24_aligned": {
     "rows": 6772,
-    "MAE": 2.989257688189947,
-    "RMSE": 3.843644474637487,
-    "MAPE (%)": 33.05595221106138,
-    "R2": 0.40252737997879595,
-    "WAPE (%)": 25.617561236155357,
-    "coverage_80 (%)": 81.80744240992321,
-    "mean_interval_width": 9.862360664815442
+    "MAE": 3.010395187623487,
+    "RMSE": 3.8652760600052507,
+    "MAPE (%)": 33.6785896770011,
+    "R2": 0.3957834429446113,
+    "WAPE (%)": 25.79870693940377,
+    "coverage_80 (%)": 81.45304193738924,
+    "mean_interval_width": 9.925319331205774
   },
   "baselines": {
     "Seasonal Naive (168h)": {
@@ -36,11 +36,11 @@
       "WAPE (%)": 35.232141956949135
     },
     "Lịch sử Giờ x Thứ": {
-      "MAE": 3.042476215412293,
-      "RMSE": 3.9279421916437136,
-      "MAPE (%)": 33.052444316574864,
-      "R2": 0.3762692317197277,
-      "WAPE (%)": 26.058209860288784
+      "MAE": 3.008030670076535,
+      "RMSE": 3.891408130324651,
+      "MAPE (%)": 32.936995647811116,
+      "R2": 0.38781799865885647,
+      "WAPE (%)": 25.7631905452439
     }
   }
 }
