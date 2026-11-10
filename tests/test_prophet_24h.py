@@ -82,17 +82,23 @@ class DayAheadTests(unittest.TestCase):
     def test_fast_additive_path_matches_public_predict_on_real_checkpoint(self):
         splits = load_data()
         model = load_model(CHECKPOINT_DIR / "prophet/best_model.json")
-        val = splits["val"].iloc[:48]
+        val = splits["val"].iloc[:28]
         fast = forecast_24h(model, splits["train"], val)
         reference = forecast_24h(model, splits["train"], val, fast=False)
         np.testing.assert_allclose(fast.yhat, reference.yhat, rtol=0, atol=1e-10)
 
-    def test_partial_last_day_is_excluded_and_limit_is_respected(self):
+    def test_partial_last_day_is_scored_without_padding_and_limit_is_respected(self):
         result = forecast_24h(LagModel(), self.history, self.evaluation.iloc[:28])
-        self.assertEqual(len(result), 24)
+        self.assertEqual(len(result), 28)
+        np.testing.assert_array_equal(result.y, self.evaluation.y.iloc[:28])
+        self.assertEqual(result.lead_hour.iloc[-4:].tolist(), [1, 2, 3, 4])
+        np.testing.assert_array_equal(result.yhat.iloc[-4:], self.evaluation.y.iloc[23] + np.arange(1, 5))
         self.assertEqual(len(forecast_24h(LagModel(), self.history, self.evaluation, max_days=1)), 24)
-        with self.assertRaises(ValueError):
-            forecast_24h(LagModel(), self.history, self.evaluation.iloc[:23])
+        self.assertEqual(len(forecast_24h(LagModel(), self.history, self.evaluation.iloc[:23])), 23)
+        changed = self.evaluation.iloc[:28].copy()
+        changed.loc[changed.index[-4:], "y"] = 999
+        altered = forecast_24h(LagModel(), self.history, changed)
+        np.testing.assert_array_equal(result.yhat, altered.yhat)
         with self.assertRaises(ValueError):
             forecast_24h(LagModel(), self.history, self.evaluation, max_days=0)
 

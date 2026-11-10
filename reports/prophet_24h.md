@@ -94,12 +94,32 @@ thấp nhất, nhưng RMSE thấp nhất thuộc cấu hình lags prior 0.01. MA
 
 Đánh giá riêng checkpoint một giờ ban đầu theo 24 giờ cũng đạt MAE 3.105928,
 MAPE 36.015295%. Việc chọn lại xác nhận cùng cấu hình thắng trong bốn ứng viên;
-không tạo ra cải thiện giả so với checkpoint ban đầu. Chưa đánh giá test của
-thí nghiệm 24 giờ và chưa khẳng định kết quả so sánh cuối cùng với SARIMAX/LSTM.
+không tạo ra cải thiện giả so với checkpoint ban đầu. Chưa khẳng định kết quả
+so sánh cuối cùng với SARIMAX/LSTM nếu quy trình chưa được đồng nhất.
 
 Sai số theo `lead_hour` cũng đồng thời phân theo giờ trong ngày (bước 1 là 00h,
 bước 24 là 23h); không thể dùng riêng bảng này để khẳng định sai số tăng chỉ do
 chân trời dự báo mà bỏ qua khác biệt nhu cầu giữa các giờ.
+
+## Kết quả test đủ 6.796 giờ
+
+Đã sửa quy tắc bỏ ngày cuối chưa đủ 24 giờ. Kết quả mới bao gồm tất cả khung giờ
+từ 01/01/2026 00h đến 11/10/2026 03h: 283 khối đủ ngày và 1 khối được chấm 4 giờ.
+Khối cuối vẫn tạo 24 bước dự báo; chỉ trả kết quả và tính điểm cho các giờ có
+nhãn thực tế. Không dùng nhãn giả, không huấn luyện lại hoặc chọn cấu hình bằng test.
+
+| Chỉ số | Prophet 24h, cấu hình đã chọn trên validation |
+| --- | ---: |
+| MAE | 3.050050 |
+| RMSE | 3.966254 |
+| MAPE (%) | 32.748853 |
+| R2 | 0.364043 |
+
+Kết quả tại `outputs/prophet/day_ahead_24h/test_selected/`. Thư mục `test/` dùng
+checkpoint một giờ ban đầu cũng đã được cập nhật đủ giờ, cho kết quả giống nhau
+vì cấu hình được chọn và trọng số tương ứng trùng nhau trong lần chạy này.
+Đã kiểm tra đúng toàn bộ timestamp/nhãn test và các dự báo cũ không thay đổi.
+Chỉ khác số giờ được chấm và các chỉ số tổng hợp do bổ sung bốn giờ cuối.
 
 ## Kết quả
 
@@ -111,9 +131,12 @@ chân trời dự báo mà bỏ qua khác biệt nhu cầu giữa các giờ.
 - `metrics_by_lead.csv`: kiểm tra sai số ở các bước 1 tới 24.
 - `metrics_by_day.csv`: kiểm tra sai số theo ngày.
 
-Chỉ đánh giá ngày đủ 24 giờ. Với bộ test hiện tại, bốn giờ cuối ngày 11/10/2026
-bị loại khỏi thí nghiệm 24 giờ. `--max-days` chỉ chạy những ngày đầu, không được
-coi là đánh giá đầy đủ. `lead_hour=1` là giờ bắt đầu ngay tại thời điểm phát hành;
+Đánh giá tất cả giờ có thực tế: với bộ test hiện tại là **6.796 giờ**, gồm 283 ngày
+đầy đủ và 4 giờ 00h–03h ngày 11/10/2026. Khối cuối vẫn phát hành dự báo 24 giờ từ
+00h, nhưng chỉ chấm 4 giờ có nhãn; không điền nhãn giả cho 20 giờ còn lại.
+`metrics_by_day.csv` có cột `n_hours` để nhận biết ngày cuối chỉ chấm 4 giờ.
+`--max-days` chỉ chạy những ngày đầu, không được coi là đánh giá đầy đủ.
+`lead_hour=1` là giờ bắt đầu ngay tại thời điểm phát hành;
 `lead_hour=24` là khung cuối cùng của ngày, không phải 24h dữ liệu thực tế mới.
 
 ## Giới hạn và cách dùng trong báo cáo

@@ -84,12 +84,14 @@ def _additive_predictor(model, dates):
 
 
 def forecast_24h(model, history, evaluation, max_days=None, fast=True):
-    """Forecast complete calendar days, reveal actuals only after each 24h block.
+    """Issue full 24h blocks; score every available hour, including a short tail.
 
     Only ds/y and the historical EWM seed are consumed. Evaluation feature
     columns are deliberately ignored, since they can contain within-day actuals.
     forecast_origin is the issue time (00:00); history_cutoff is the last known
     hourly bucket (23:00 of the previous day). Timestamps keep input conventions.
+    The final forecast still spans 24h, but hours without actuals are not scored
+    or returned. No artificial target padding is used.
     """
     if max_days is not None and (not isinstance(max_days, int) or max_days < 1):
         raise ValueError("max_days must be a positive integer")
@@ -112,20 +114,19 @@ def forecast_24h(model, history, evaluation, max_days=None, fast=True):
     if fitted_history is not None and not fitted_history.empty:
         if pd.to_datetime(fitted_history.ds).max() >= evaluation.ds.iloc[0]:
             raise ValueError("Checkpoint was fitted on evaluation/future timestamps")
-    days = len(evaluation) // 24
+    days = (len(evaluation) + 23) // 24
     if max_days is not None:
         days = min(days, max_days)
-    if not days:
-        raise ValueError("Need at least one complete 24-hour day")
-
-    cached_predict = _additive_predictor(model, evaluation.ds.iloc[:days * 24]) if fast else None
+    n_hours = min(len(evaluation), days * 24)
+    forecast_dates = pd.Series(pd.date_range(evaluation.ds.iloc[0], periods=days * 24, freq="h"))
+    cached_predict = _additive_predictor(model, forecast_dates) if fast else None
     observed = _History(history)
     rows = []
     for day in range(days):
         block = evaluation.iloc[day * 24:(day + 1) * 24]
         recursive = observed.copy()
         origin = block.ds.iloc[0]
-        for lead, timestamp in enumerate(block.ds, 1):
+        for lead, timestamp in enumerate(forecast_dates.iloc[day * 24:(day + 1) * 24], 1):
             features = recursive.features(timestamp)
             estimate = (cached_predict(day * 24 + lead - 1, features) if cached_predict
                         else float(predict(model, features).yhat.iloc[0]))
@@ -138,7 +139,8 @@ def forecast_24h(model, history, evaluation, max_days=None, fast=True):
         # None of this day's targets enter predictions made at its origin.
         for value in block.y:
             observed.observe(value)
-    result = pd.DataFrame(rows)
+    # Keep only genuine evaluation labels; unobserved forecast hours are unscored.
+    result = pd.DataFrame(rows).iloc[:n_hours].copy()
     result["y"] = evaluation.y.iloc[:len(result)].to_numpy()
     return result
 
@@ -165,21 +167,26 @@ def run_day_ahead(data_dir=ROOT / "data", checkpoint_dir=ROOT / "checkpoints/pro
     score = lambda part: compute_metrics(part.y, part.yhat)
     by_lead = [{"lead_hour": int(lead), "n_hours": len(part), **score(part)}
                for lead, part in frame.groupby("lead_hour")]
-    by_day = [{"forecast_origin": str(origin), **score(part)}
+    by_day = [{"forecast_origin": str(origin), "n_hours": len(part), **score(part)}
               for origin, part in frame.groupby("forecast_origin")]
     metadata = {
         "experiment": "prophet_day_ahead_24h", "split": split,
         "target": "MEDIC dispatch-response rows per call-received hour (legacy column: call_count)",
         "horizon_hours": 24, "issue_time": "00:00 after observing the previous 23:00 bucket",
-        "protocol": "Frozen checkpoint; recursive lag/rolling/EWM within each day; actuals revealed only after the full day; no refitting.",
+        "protocol": "Frozen checkpoint; issue full 24h blocks; recursive lag/rolling/EWM within each day; actuals revealed only after the block; score every available actual hour, including a partial final day; no refitting or padded labels.",
         "model_selection": "Reuses existing checkpoint; this run does NOT select hyperparameters for 24-hour forecasting.",
         "comparability": "Compare only identical issue times, evaluated hours, training/refit policies and metrics. This run alone does not harmonize other models.",
         "time_convention": "Naive hourly timestamps from source CSV; no timezone conversion.",
         "checkpoint_fit_end": str(pd.to_datetime(model.history.ds).max()),
         "observation_cutoff_at_first_origin": str(history.ds.iloc[-1]),
         "evaluation_start": str(frame.ds.iloc[0]), "evaluation_end": str(frame.ds.iloc[-1]),
-        "n_hours": len(frame), "n_days": len(frame) // 24,
-        "incomplete_tail_hours_excluded": len(splits[split]) % 24,
+        "n_hours": len(frame), "n_days": int(frame.forecast_origin.nunique()),
+        "n_complete_days": len(frame) // 24,
+        "partial_last_day_hours": len(frame) % 24,
+        "n_generated_forecast_hours": int(frame.forecast_origin.nunique()) * 24,
+        "forecast_hours_without_actuals": (-len(frame)) % 24,
+        "incomplete_tail_hours_excluded": 0,
+        "hours_not_evaluated_due_to_max_days": len(splits[split]) - len(frame),
         "max_days": max_days, "checkpoint_sha256": hashlib.sha256(checkpoint.read_bytes()).hexdigest(),
         "metrics": score(frame),
         "seasonal_naive_168h": compute_metrics(frame.y, frame.seasonal_naive_168h),

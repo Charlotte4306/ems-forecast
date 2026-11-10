@@ -91,7 +91,7 @@ def main(argv=None):
     parser.add_argument("--checkpoint-dir", type=Path, default=None)
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--forecast-24h", action="store_true",
-                        help="Evaluate saved checkpoint recursively over complete days; no training")
+                        help="Evaluate saved checkpoint in 24h blocks, scoring all available hours; no training")
     mode.add_argument("--select-24h", action="store_true",
                       help="Fit four configurations on train, select on full 24h validation, no test")
     parser.add_argument("--forecast-split", choices=("val", "test"), default="test")
