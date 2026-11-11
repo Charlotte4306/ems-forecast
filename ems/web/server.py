@@ -59,7 +59,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(404, b"Not found", "text/plain")
         content_types = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
                          ".mjs": "text/javascript; charset=utf-8", ".woff2": "font/woff2",
-                         ".svg": "image/svg+xml"}
+                         ".svg": "image/svg+xml", ".ttf": "font/ttf"}
         if target.suffix not in content_types:
             return self.respond(404, b"Not found", "text/plain")
         self.respond(200, target.read_bytes(), content_types[target.suffix])

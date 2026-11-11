@@ -1,6 +1,6 @@
 # Dự báo nhu cầu xe cứu thương San Francisco → số xe cần trực
 
-Dự báo số cuộc gọi EMS theo giờ bằng LSTM và Prophet trên cùng dữ liệu train,
+Dự báo lượt điều động xe theo giờ bằng LSTM và Prophet trên cùng dữ liệu train,
 validation, test. Code được tổ chức theo từng mô hình và dùng chung đường dẫn,
 đọc CSV và hàm tính metrics.
 
@@ -38,17 +38,48 @@ ems-forecast/
 
 ## Giao diện web
 
-Frontend trên `feat/demo` gồm Tổng quan, Dự báo nhu cầu và Kế hoạch năng lực.
-Dùng dữ liệu test thật, hỗ trợ Prophet/LSTM, MAE/RMSE/WAPE, phát lại theo giờ,
-bảng dữ liệu và xuất CSV. ARIMA, khoảng bất định và phân vùng chưa sẵn sàng.
+Frontend trên `feat/demo` giữ cấu trúc, CSS, font và hiệu ứng từ bản HTML mẫu:
+Tổng quan, Dự báo nhu cầu, Kế hoạch xe, Chi phí kịch bản, Đánh giá mô hình,
+Dữ liệu lịch sử và Cài đặt. Prophet có kết quả thật 1 giờ và 24 giờ, mỗi bộ
+6.796 giờ; hiển thị MAE/MAPE, mốc lịch sử/dự báo, bảng dữ liệu và tải CSV.
+LSTM/SARIMAX chờ kết quả theo cùng giao thức. Kế hoạch xe và chi phí ghi rõ
+trạng thái chờ phương pháp chung, chưa công bố số xe hoặc chi phí giả định.
 
 ```powershell
-python -m ems.web
+.\.venv\Scripts\python.exe -m ems.web --host 127.0.0.1 --port 8501
 ```
 
 Mở `http://127.0.0.1:8501`. Không cần cài thư viện mô hình để chạy web khi đã có
-`outputs/web/dataset.json`. Khi thay checkpoint hoặc dữ liệu, xuất lại bằng
-`.\.venv\Scripts\python.exe -m ems.web.export` trong môi trường ML.
+`outputs/web/dataset.json`. Giữ nguyên nền loang chuyển động, trái tim, mây,
+sóng, parallax, chuyển cảnh, hover, số đếm tăng dần và hiệu ứng vẽ biểu đồ.
+IBM Plex Sans dùng đúng ba file font chính thức 400/500/600 có tiếng Việt,
+phục vụ cục bộ. Bật “Giảm chuyển động” trong Cài đặt nếu muốn tắt hiệu ứng.
+Sau khi cập nhật giao diện, nhấn Ctrl+F5 để tải lại CSS/JS/font.
+VPS chỉ cần Python tiêu chuẩn để phục vụ bản đã lưu,
+không chạy mô hình nặng. Cài đặt giao diện được lưu trên trình duyệt.
+
+Khi cập nhật kết quả Prophet, đóng gói lại từ CSV, không huấn luyện mô hình:
+
+```powershell
+python -m ems.web.prepare_dashboard --prophet24-ref feat/prophet-24h
+```
+
+Lệnh này yêu cầu bản `dataset.json` có sẵn và nhánh/commit nguồn tồn tại cục bộ.
+Nó đọc artifact `test_selected/predictions_24h.csv` bằng Git, lưu commit nguồn
+và SHA-256 để truy vết, không checkout hoặc sửa code mô hình. Có thể truyền
+commit SHA thay tên nhánh. Bỏ `--prophet24-ref` sẽ chỉ đóng gói chế độ 1 giờ.
+Nếu chạy exporter cũ `ems.web.export`, cần chạy lại lệnh đóng gói ở trên sau đó.
+Snapshot vẫn giữ các trường cũ cho công cụ hiện hữu; giao diện mới đọc `profiles`.
+Ngày cuối chỉ có 4 giờ đối chiếu; không tự thêm 20 giờ thực tế còn thiếu.
+Các ô chưa có dữ liệu gốc (mã cuộc gọi, mã xe, thời gian bận) giữ nguyên hình thức
+nhưng hiển thị “—”. CSV xuất chuỗi nhu cầu theo giờ đang xem, không dựng bản ghi gốc.
+
+Kiểm tra phần web:
+
+```powershell
+node --test tests/web-analysis.test.mjs tests/web-dashboard.test.mjs
+python -m unittest tests.test_web_server tests.test_web_dashboard_export
+```
 
 Xem [triển khai lên emsforecast.live](deploy/README.md) và
 [quyết định thiết kế](web/DESIGN.md).

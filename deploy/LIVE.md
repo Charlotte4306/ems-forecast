@@ -1,45 +1,48 @@
 # Bản triển khai hiện tại
 
-Đã triển khai ngày 29/10/2026 theo giờ Việt Nam:
+Đã triển khai ngày 10/11/2026 từ working tree `feat/demo`, không commit/push.
 
 - Website: https://emsforecast.live
-- Health: https://emsforecast.live/health
-- Release: `20261029-frontend-01`
-- Thư mục chạy: `/home/charlotte/apps/emsforecast-releases/20261029-frontend-01`
-- Service: `emsforecast.service`, đã bật tự khởi động.
-- Caddy chuyển HTTPS vào `127.0.0.1:8501`.
-- Nguồn: working tree `feat/demo`, nền commit `199e394`. Không tạo commit/push khi triển khai.
-- Archive SHA-256: `0c793cb0079b1c1510698aab05aa5a96e166123253d43e340bc61624113423af`.
+- Health: https://emsforecast.live/health (và www) trả `ok`.
+- Release: `20261110-081915-reference-ui`
+- Thư mục chạy: `/home/charlotte/apps/emsforecast-releases/20261110-081915-reference-ui`
+- Service: `emsforecast.service`, chạy Python stdlib trên `127.0.0.1:8501`.
+- Caddy và cấu hình các domain được giữ nguyên.
+- Archive SHA-256: `be827e4e3a5459c7ffe2aed8aca84ebebb699d8a7e0e4adbb96504bc9fb5d6d2`.
 
-Release chỉ chứa frontend, font, server Python stdlib và bộ kết quả 6.772 giờ.
-Không cần cài PyTorch/Prophet trên VPS để hiển thị demo. Manifest ở
-`release-manifest.json` trong thư mục release ghi hash từng file đã đóng gói.
+Giao diện giữ CSS và hiệu ứng của HTML mẫu; font IBM Plex Sans 400/500/600
+được phục vụ cục bộ. Dữ liệu Prophet 1 giờ và 24 giờ có 6.796 giờ mỗi bộ.
+Không cần chạy Prophet/PyTorch hoặc cài thư viện mô hình trên VPS.
+Bản ghi raw, năng lực và chi phí chưa có dữ liệu sẽ để dấu “—”.
+
+Đã kiểm tra manifest/hash trước khi chuyển service, chạy HTTP smoke test
+trên loopback, rồi đối chiếu qua HTTPS công khai: HTML, CSS, JS và cả ba font
+khớp file local. API đủ hai bộ 6.796 giờ, health cả hai domain trả `ok`.
+Đây là kiểm tra HTTP/dữ liệu, không phải xác nhận ảnh render trong trình duyệt.
+
+Manifest từng file nằm trong `release-manifest.json` tại thư mục release.
+Checkout `/home/charlotte/apps/ems-forecast` không bị thay đổi. `git pull` ở
+checkout không tự cập nhật service đang chạy từ thư mục release riêng.
 
 ## Quản lý trên VPS
 
 ```bash
 sudo systemctl status emsforecast --no-pager
-sudo systemctl restart emsforecast
 sudo journalctl -u emsforecast -n 60 --no-pager
 curl -fsS https://emsforecast.live/health
 ```
 
-Checkout `/home/charlotte/apps/ems-forecast` được giữ nguyên. `git pull` trong
-checkout đó chưa tự cập nhật bản live, vì service đang chạy từ thư mục release
-riêng. Khi cập nhật, chuẩn bị release mới, kiểm tra rồi đổi WorkingDirectory của
-service sang release đó. Cần commit/push riêng nếu muốn lưu code vào GitHub.
+## Quay về bản trước
 
-## Quay lại trang kiểm tra Caddy trước triển khai
-
-Bản sao cấu hình cũ nằm tại:
-
-`/home/charlotte/apps/emsforecast-releases/20261029-frontend-01/deploy/backups/Caddyfile`
+Bản service trước khi triển khai được lưu tại:
+`/home/charlotte/apps/emsforecast-releases/20261110-081915-reference-ui/previous-emsforecast.service`.
+Bản release cũ `20261029-frontend-01` được giữ lại.
 
 ```bash
-sudo cp /home/charlotte/apps/emsforecast-releases/20261029-frontend-01/deploy/backups/Caddyfile /etc/caddy/Caddyfile
-sudo caddy validate --config /etc/caddy/Caddyfile
-sudo systemctl reload caddy
+sudo install -m 644 /home/charlotte/apps/emsforecast-releases/20261110-081915-reference-ui/previous-emsforecast.service /etc/systemd/system/emsforecast.service
+sudo systemctl daemon-reload
+sudo systemctl restart emsforecast
+curl -fsS https://emsforecast.live/health
 ```
 
-Thao tác này đưa domain về trang kiểm tra cũ, không xóa dữ liệu hoặc release.
-Service có thể dừng bằng `sudo systemctl stop emsforecast` nếu không còn dùng.
+Khi mở bản mới, nhấn Ctrl+F5 để tải lại CSS, JavaScript và font.
