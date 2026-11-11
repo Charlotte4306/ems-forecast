@@ -526,23 +526,37 @@ def vehicles_needed(workload: np.ndarray, rho_max: float = 0.80) -> np.ndarray:
 
 
 SHIFT_PATTERNS = {
-    "3 ca × 8h (07–15, 15–23, 23–07)": (7, 8),
-    "2 ca × 12h (07–19, 19–07)": (7, 12),
+    "3 ca × 8h (00–08, 08–16, 16–24)": (0, 8),
+    "2 ca × 12h (00–12, 12–24)": (0, 12),
 }
 
 
-def shift_plan(timestamps, hourly_vehicles, start_hour: int = 7, length: int = 8):
+def shift_plan(timestamps, hourly_vehicles, start_hour: int = 0, length: int = 8):
     """
     Quy đổi nhu cầu xe theo giờ thành số xe mỗi ca: lấy mức CAO NHẤT trong ca.
 
     Trả về (plan_theo_giờ, shift_start) — cả hai là Series theo từng giờ;
     shift_start là thời điểm bắt đầu ca chứa giờ đó (dùng để gom theo ca).
+    Ca thiếu giờ ở đầu/cuối được đánh dấu NaN, không suy lịch ca từ một phần ca.
     """
     ts = pd.DatetimeIndex(timestamps)
-    values = pd.Series(np.asarray(hourly_vehicles), index=ts)
+    if not len(ts) or ts.hasnans or not ts.is_unique or not ts.is_monotonic_increasing:
+        raise ValueError("Expected non-empty, ordered, unique hourly timestamps")
+    if not ((ts.minute == 0) & (ts.second == 0) & (ts.microsecond == 0) & (ts.nanosecond == 0)).all():
+        raise ValueError("Shift timestamps must start at an exact hour")
+    if len(ts) > 1 and not ((ts[1:] - ts[:-1]) == pd.Timedelta(hours=1)).all():
+        raise ValueError("Shift timestamps must be contiguous hourly observations")
+    if length not in (8, 12) or not isinstance(start_hour, int) or not 0 <= start_hour < 24:
+        raise ValueError("Expected an 8h/12h shift and start_hour in 0..23")
+    hourly_vehicles = np.asarray(hourly_vehicles, dtype=float)
+    if hourly_vehicles.shape != (len(ts),) or not np.isfinite(hourly_vehicles).all() or (hourly_vehicles < 0).any():
+        raise ValueError("Expected aligned finite non-negative hourly vehicle counts")
+    values = pd.Series(hourly_vehicles, index=ts)
     shift_start = (ts - pd.Timedelta(hours=start_hour)).floor(f"{length}h") + pd.Timedelta(hours=start_hour)
     shift_start = pd.Series(shift_start, index=ts)
     plan = values.groupby(shift_start.values).transform("max")
+    complete = values.groupby(shift_start.values).transform("size") == length
+    plan = plan.where(complete)
     return plan, shift_start
 
 
@@ -552,11 +566,29 @@ def evaluate_plan(plan, need, shift_start=None, cost_ratios=(2, 3, 5)) -> Dict[s
 
     Chi phí tính theo đơn vị "xe-giờ thừa": 1 xe-giờ thừa = 1, 1 xe-giờ thiếu = r
     (r = cost_ratios) — chưa phải chi phí tiền thật, dùng để so các phương án.
+    Có shift_start: bỏ các giờ plan=NaN do ca chưa đầy đủ; xuất rõ số giờ bị loại.
+    Không có shift_start: chấm toàn bộ giờ, không cho phép giá trị thiếu.
     """
     plan, need = np.asarray(plan, dtype=float), np.asarray(need, dtype=float)
+    if plan.ndim != 1 or plan.shape != need.shape or not len(plan):
+        raise ValueError("Expected aligned non-empty hourly plan and need arrays")
+    if not np.isfinite(need).all() or (need < 0).any() or np.isinf(plan).any():
+        raise ValueError("Expected finite need values and no infinite plan values")
+    excluded = 0
+    if shift_start is not None:
+        shift_start = np.asarray(shift_start)
+        if shift_start.shape != plan.shape:
+            raise ValueError("Shift identifiers must match the plan hours")
+        valid = np.isfinite(plan)
+        excluded = int((~valid).sum())
+        plan, need, shift_start = plan[valid], need[valid], shift_start[valid]
+    if not len(plan) or not np.isfinite(plan).all() or (plan < 0).any():
+        raise ValueError("No complete shifts to evaluate, or invalid hourly plan")
     short = np.clip(need - plan, 0, None)
     excess = np.clip(plan - need, 0, None)
     result = {
+        "Số giờ đánh giá": len(plan),
+        "Số giờ loại (ca chưa đủ)": excluded,
         "Xe-giờ bố trí": plan.sum(),
         "Xe-giờ thiếu": short.sum(),
         "Xe-giờ thừa": excess.sum(),
@@ -566,6 +598,7 @@ def evaluate_plan(plan, need, shift_start=None, cost_ratios=(2, 3, 5)) -> Dict[s
     }
     if shift_start is not None:
         any_short = pd.Series(short > 0).groupby(np.asarray(shift_start)).any()
+        result["Số ca đánh giá"] = len(any_short)
         result["% ca có giờ thiếu"] = any_short.mean() * 100
     for r in cost_ratios:
         result[f"Chi phí (thiếu = {r}× thừa)"] = excess.sum() + r * short.sum()
