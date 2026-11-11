@@ -1,0 +1,107 @@
+{
+  "experiment": "prophet_day_ahead_24h_selection",
+  "selected": {
+    "name": "prophet_lags_cp0.05",
+    "use_regressors": true,
+    "changepoint_prior_scale": 0.05,
+    "n_hours": 8760,
+    "MAE": 3.10592812675724,
+    "RMSE": 3.99287615607707,
+    "MAPE (%)": 36.015294891868365,
+    "R2": 0.4022577233147371,
+    "elapsed_seconds": 21.43997689999742
+  },
+  "selection_metric": "full-precision MAE on all validation hours, horizon 24h",
+  "seed": 42,
+  "horizon_hours": 24,
+  "protocol": "Fit each candidate on train only; issue 24 forecasts at midnight; recursively update features; reveal actuals after full day. No train+validation refit.",
+  "test_evaluated": false,
+  "target": "MEDIC dispatch-response rows per call-received hour (legacy column: call_count)",
+  "training_end": "2024-12-31 23:00:00",
+  "validation_start": "2025-01-01 00:00:00",
+  "validation_end": "2025-12-31 23:00:00",
+  "n_validation_hours": 8760,
+  "n_validation_days": 365,
+  "candidates": [
+    {
+      "name": "prophet_seasonal_cp0.01",
+      "use_regressors": false,
+      "changepoint_prior_scale": 0.01,
+      "n_hours": 8760,
+      "MAE": 3.1534980875666,
+      "RMSE": 4.052920026211402,
+      "MAPE (%)": 36.86747688029817,
+      "R2": 0.3841451566624222,
+      "elapsed_seconds": 16.384825699999055
+    },
+    {
+      "name": "prophet_seasonal_cp0.05",
+      "use_regressors": false,
+      "changepoint_prior_scale": 0.05,
+      "n_hours": 8760,
+      "MAE": 3.152648820307606,
+      "RMSE": 4.054392300438357,
+      "MAPE (%)": 36.75029230748348,
+      "R2": 0.38369764134313056,
+      "elapsed_seconds": 21.835384299996804
+    },
+    {
+      "name": "prophet_lags_cp0.01",
+      "use_regressors": true,
+      "changepoint_prior_scale": 0.01,
+      "n_hours": 8760,
+      "MAE": 3.1117786643596634,
+      "RMSE": 3.9904699011485545,
+      "MAPE (%)": 36.430800082248645,
+      "R2": 0.40297794946277254,
+      "elapsed_seconds": 15.663548900000023
+    },
+    {
+      "name": "prophet_lags_cp0.05",
+      "use_regressors": true,
+      "changepoint_prior_scale": 0.05,
+      "n_hours": 8760,
+      "MAE": 3.10592812675724,
+      "RMSE": 3.99287615607707,
+      "MAPE (%)": 36.015294891868365,
+      "R2": 0.4022577233147371,
+      "elapsed_seconds": 21.43997689999742
+    }
+  ],
+  "seasonal_naive_168h": {
+    "MAE": 4.181164383561644,
+    "RMSE": 5.395573612867509,
+    "MAPE (%)": 45.80072875419787,
+    "R2": -0.09148441038832944
+  },
+  "regressors": [
+    "lag_1h",
+    "lag_2h",
+    "lag_3h",
+    "lag_6h",
+    "lag_12h",
+    "lag_24h",
+    "lag_48h",
+    "lag_168h",
+    "rolling_mean_24h",
+    "rolling_std_24h",
+    "rolling_mean_168h",
+    "rolling_std_168h",
+    "ewm_24h",
+    "ewm_168h"
+  ],
+  "versions": {
+    "prophet": "1.5.0",
+    "pandas": "3.1.0",
+    "numpy": "2.5.4"
+  },
+  "data_sha256": {
+    "X_train.csv": "915a4349a11c7457da4bfa1215d3e68084f98d4c646014722eaef220bef2fd06",
+    "X_val.csv": "437b4b46955b8fd9d71d99d22e6d83744fb74e549611ca4506efcf560a4ccbda",
+    "y_train.csv": "5512467f0e78d5d8a0e19b62872c3dd6c8a625064e1417f552863abc340bf938",
+    "y_val.csv": "b6011825c814b64923e921a77dffd77f99a0f0d831e6604d631471beed762d27"
+  },
+  "checkpoint_sha256": "e8b6f650688e867d241296ea0ce2dc1aa7aae76ec48ea9a0b05cdf03044a0a16",
+  "elapsed_seconds": 76.35867259999941,
+  "comparability": "Other models must use the same issue times, evaluation hours and agreed training/refit policy. Validation selection score is not test performance."
+}

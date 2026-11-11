@@ -1,0 +1,96 @@
+{
+  "selected": {
+    "order": [
+      2,
+      0,
+      2
+    ],
+    "K": 4,
+    "MAE": 3.0961038455320122
+  },
+  "selection_metric": "full-precision validation MAE",
+  "window_hours": 8760,
+  "horizon_hours": 24,
+  "maxiter": 300,
+  "optimizer": "powell",
+  "interval_level": 0.8,
+  "converged": true,
+  "protocol": "Fit latest train window; select on validation; refit latest train+validation window; forecast consecutive blocks, update state after observing each block, fixed parameters.",
+  "time_convention": "Naive timestamps preserved from input calendar columns; no timezone conversion.",
+  "comparability": "Prophet/LSTM artifacts use a different training cutoff and one-hour evaluation protocol; aligned timestamps alone do not make protocols equivalent.",
+  "splits": {
+    "train": {
+      "rows": 52440,
+      "start": "2019-01-08 00:00:00",
+      "end": "2024-12-31 23:00:00"
+    },
+    "val": {
+      "rows": 8760,
+      "start": "2025-01-01 00:00:00",
+      "end": "2025-12-31 23:00:00"
+    },
+    "test": {
+      "rows": 6796,
+      "start": "2026-01-01 00:00:00",
+      "end": "2026-10-11 03:00:00"
+    }
+  },
+  "final_fit": {
+    "rows": 8760,
+    "start": "2025-01-01 00:00:00",
+    "end": "2025-12-31 23:00:00"
+  },
+  "test_metrics": {
+    "all_test": {
+      "MAE": 2.997401114601261,
+      "RMSE": 3.866299678169071,
+      "MAPE (%)": 32.995723582739636,
+      "R2": 0.39569245087305716,
+      "WAPE (%)": 25.672150495072554,
+      "coverage_80 (%)": 81.63625662154207,
+      "mean_interval_width": 9.876610660141083
+    },
+    "lstm_seq24_aligned": {
+      "MAE": 2.990695825052709,
+      "RMSE": 3.8492420026878453,
+      "MAPE (%)": 32.99931859081264,
+      "R2": 0.40078590519503254,
+      "WAPE (%)": 25.629885887620944,
+      "coverage_80 (%)": 81.68930891907856,
+      "mean_interval_width": 9.876692258881885
+    }
+  },
+  "baselines": {
+    "Seasonal Naive (168h)": {
+      "MAE": 4.113596233078281,
+      "RMSE": 5.308521473577422,
+      "MAPE (%)": 43.94617263345999,
+      "R2": -0.13923717945454617,
+      "WAPE (%)": 35.232141956949135
+    },
+    "Lịch sử Giờ x Thứ": {
+      "MAE": 3.042476215412293,
+      "RMSE": 3.9279421916437136,
+      "MAPE (%)": 33.052444316574864,
+      "R2": 0.3762692317197277,
+      "WAPE (%)": 26.058209860288784
+    }
+  },
+  "versions": {
+    "statsmodels": "0.14.6",
+    "pandas": "3.1.0",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1"
+  },
+  "python": "3.14.2",
+  "data_sha256": {
+    "X_train.csv": "915a4349a11c7457da4bfa1215d3e68084f98d4c646014722eaef220bef2fd06",
+    "X_val.csv": "437b4b46955b8fd9d71d99d22e6d83744fb74e549611ca4506efcf560a4ccbda",
+    "X_test.csv": "98ed90ee0c31a5af34628539d43ca519c3b302d93c5e4eec290f6c777ff5cfea",
+    "y_train.csv": "5512467f0e78d5d8a0e19b62872c3dd6c8a625064e1417f552863abc340bf938",
+    "y_val.csv": "b6011825c814b64923e921a77dffd77f99a0f0d831e6604d631471beed762d27",
+    "y_test.csv": "46ff77c361917325e3ca93cab2b49b9dd8d53866daa6535a86e9d55892e64f96"
+  },
+  "elapsed_seconds": 280.4657623000021,
+  "checkpoint_state": "Final fit before test; test observations have not been added to this checkpoint."
+}

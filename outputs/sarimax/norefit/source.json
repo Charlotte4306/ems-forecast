@@ -1,0 +1,8 @@
+{
+  "source_ref": "origin/main",
+  "source_revision": "d3d4bf5fabffa34459ab9c4493f1ba7c3e815cf5",
+  "sha256": {
+    "outputs/sarimax/norefit/pred_sarimax.csv": "bac44cebfbda40490713d0b9031dbdfddf425477df4226ea43a3a3f0ab5631e9",
+    "outputs/sarimax/norefit/metrics.json": "793002a143162df46dfc013a39048e5e297b5e3fc6738f13a89933c2201530aa"
+  }
+}
