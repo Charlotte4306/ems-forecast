@@ -19,7 +19,7 @@ code = lambda s: cells.append(nbf.v4.new_code_cell(s.strip("\n")))
 md(r"""
 # 🚑 EMS Capacity Planning — Từ dự báo 24 giờ tới đến số xe cứu thương mỗi ca
 
-**Câu hỏi vận hành:** cuối mỗi ngày, cần xếp **bao nhiêu xe trực cho từng ca của ngày hôm sau**, và kế hoạch đó **đủ xe đến đâu** so với nhu cầu thực tế?
+**Câu hỏi vận hành:** tại mốc phát hành **00:00**, cần bố trí **bao nhiêu xe cho các ca trong 24 giờ kế tiếp**, và kế hoạch đó đủ xe đến đâu trong hậu kiểm? Đây chưa phải mô phỏng việc thông báo lịch trước giờ bắt đầu ca.
 
 ### Quy trình
 | Bước | Nội dung |
@@ -28,7 +28,7 @@ md(r"""
 | 2 | Tham số thời gian bận từ dữ liệu thô 2025: $E[S]$ = 63,38 phút/lượt xe và **kernel lan tỏa** (xe bận xuyên giờ). |
 | 3 | **Khối lượng công việc** $W(h) = \sum_k \hat{\lambda}(h-k)\,p_k$ và số xe $s(h) = \lceil W(h)/\rho_{max} \rceil$, với $\rho_{max}$ = 75% / 80% / 85% (kịch bản, chưa phải tiêu chuẩn). |
 | 4 | **Số xe thực cần** $s^*(h)$: đưa số lượt điều xe **thực tế 2026** qua đúng công thức trên → thước đo chung để chấm mọi kế hoạch. |
-| 5 | Lập kế hoạch theo **dự báo trung bình**, theo **cận trên P90**, và tìm **phân vị tối ưu** theo tỷ lệ chi phí thiếu/thừa. |
+| 5 | Chốt trước hai phương án chính: **Trung bình** và **P90**. P50–P95 chỉ là khảo sát hậu kiểm, không chọn phân vị tối ưu trên test. |
 | 6 | Quy đổi sang **ca trực** (3 ca × 8h, 2 ca × 12h), mỗi ca lấy mức cao nhất trong ca. |
 | 7 | Đánh giá: xe-giờ bố trí, xe-giờ thiếu/thừa, % giờ và % ca thiếu xe, chi phí tương đối. |
 
@@ -364,7 +364,9 @@ Mỗi dòng là một **cách xếp xe**: nguồn dự báo × dựa trên dự 
 md(r"""
 ## Bước 4: Quy đổi sang ca trực
 
-Mỗi ca nhận số xe = **mức cao nhất** của kế hoạch theo giờ trong ca (phương án cơ sở, an toàn). Số xe thực cần vẫn chấm **theo từng giờ**, nên một ca bị tính là "thiếu" nếu có ít nhất một giờ trong ca thiếu xe.
+Mỗi ca nhận số xe = **mức cao nhất** của kế hoạch theo giờ trong ca (phương án cơ sở). Số xe thực cần vẫn chấm **theo từng giờ**, nên một ca bị tính là "thiếu" nếu có ít nhất một giờ trong ca thiếu xe.
+
+Ca 8 giờ: **00–08, 08–16, 16–24**. Ca 12 giờ: **00–12, 12–24**. Mọi ca nằm trong bản dự báo phát hành 00:00 của cùng ngày. Chỉ chấm ca đầy đủ: **6.792 giờ**; 4 giờ cuối chưa đủ một ca được loại riêng. Dự báo và bảng theo giờ vẫn có **6.796 giờ**. Mỗi bảng xuất số giờ và số ca thực sự được chấm.
 """)
 
 code(r"""
@@ -381,7 +383,8 @@ eval_shift.to_csv(OUT_DIR / "evaluation_shifts.csv", index=False)
 
 cols_s = ["Xe-giờ bố trí", "Xe-giờ thiếu", "Xe-giờ thừa", "% giờ thiếu xe", "% ca có giờ thiếu",
           f"Chi phí (thiếu = {COST_RATIO}× thừa)"]
-print(f"Đánh giá kế hoạch THEO CA, ρ = {RHO_BASE:.0%}:")
+print(f"Đánh giá kế hoạch THEO CA, ρ = {RHO_BASE:.0%}; chỉ chấm ca đủ giờ:")
+display(eval_shift[["Kiểu ca", "Số giờ đánh giá", "Số giờ loại (ca chưa đủ)", "Số ca đánh giá"]].drop_duplicates())
 tbl_s = (eval_shift[eval_shift["ρ_max"] == RHO_BASE]
          .set_index(["Kiểu ca", "Nguồn dự báo", "Kế hoạch theo"])[cols_s])
 display(tbl_s)
@@ -395,6 +398,8 @@ print(f"💡 Diễn giải: chia 3 ca × 8h có chi phí trung bình thấp hơn
 md(r"""
 #### 🔎 Cách đọc bảng (kế hoạch theo ca)
 Cùng các cột như bảng trước, thêm **% ca có giờ thiếu**: tỷ lệ số ca mà **ít nhất một giờ** trong ca bị thiếu xe.
+
+**Phạm vi:** bảng theo ca chỉ chấm 6.792 giờ trong các ca đầy đủ; bảng theo giờ giữ 6.796 giờ. Khi so tổng giữa hai bảng phải dùng cùng phạm vi giờ, không quy chênh lệch do 4 giờ cuối thành tác động của chia ca.
 
 * **Xe-giờ bố trí tăng so với bảng theo giờ**: mỗi ca phải giữ số xe của **giờ cao nhất** trong ca suốt cả ca, nên các giờ vắng trong ca có xe dư. Đây là "cái giá" của việc không thể đổi số xe mỗi giờ.
 * **% giờ thiếu xe giảm** so với bảng theo giờ, cũng vì lý do trên: lấy mức cao nhất trong ca đã tạo sẵn dự phòng.
@@ -413,7 +418,7 @@ for pattern, (start, length) in SHIFT_PATTERNS.items():
     for m in MODELS:
         for basis in ["Trung bình", "P90"]:
             plan_h, sid = shift_tables[(pattern, m, basis, RHO_BASE)]
-            per_shift = plan_h.groupby(sid.values).first()
+            per_shift = plan_h.groupby(sid.values).first().dropna()
             by_start = per_shift.groupby(per_shift.index.hour).agg(["mean", "min", "max"])
             for h, r in by_start.iterrows():
                 rows.append({"Kiểu ca": pattern, "Nguồn dự báo": m, "Kế hoạch theo": basis,
@@ -426,7 +431,7 @@ shift_size.to_csv(OUT_DIR / "shift_vehicles.csv", index=False)
 need_rows = []
 for pattern, (start, length) in SHIFT_PATTERNS.items():
     real_h, sid = shift_plan(ts_test, need[RHO_BASE], start, length)
-    per_shift = real_h.groupby(sid.values).first()
+    per_shift = real_h.groupby(sid.values).first().dropna()
     for h, r in per_shift.groupby(per_shift.index.hour).agg(["mean", "min", "max"]).iterrows():
         need_rows.append({"Kiểu ca": pattern, "Nguồn dự báo": "Thực cần (max trong ca)",
                           "Kế hoạch theo": "—", "Ca bắt đầu": f"{h:02d}:00", "Xe TB": r["mean"],
@@ -446,7 +451,7 @@ md(r"""
 * So với dòng đáp án:
   * Các dòng **Trung bình** thường **thấp hơn** → thiếu xe ở các ngày bận.
   * Các dòng **P90** thường **cao hơn** vài xe → đó là phần dự phòng.
-* **Ca đêm** (23:00 hoặc 19:00) cần ít xe hơn ca ngày. Với 2 ca × 12h, ca 19:00 vẫn chứa các giờ tối còn đông (19–22h) nên gần bằng ca ngày → một lý do khiến chia 12h kém hiệu quả.
+* Các ca bắt đầu **00:00/08:00/16:00** hoặc **00:00/12:00**, dùng dự báo cùng ngày đã phát hành lúc 00:00. Ca chưa đủ giờ không tham gia bảng trung bình.
 * Đối chiếu thực tế: năm 2025 có **55 xe MEDIC** khác nhau hoạt động, nên các con số này nằm trong năng lực đội xe hiện có.
 """)
 
@@ -495,13 +500,11 @@ md(r"""
 
 # ─────────────────────────────────────────────────────────────────────────────
 md(r"""
-## Bước 5: Chọn mức cận trên — lập kế hoạch ở phân vị nào?
+## Bước 5: Khảo sát hậu kiểm P50–P95 — không chọn chính sách trên test
 
-"Trung bình" thì thiếu nhiều, "P90" thì thừa nhiều. Ở đây giữ cố định $\rho_{max}$ (tức cố định số xe thực cần) và **chỉ thay phân vị dự báo** dùng để lập kế hoạch: P50 … P95.
+Hai phương án chính **Trung bình** và **P90** được chốt trước khi chấm test. Phần này chỉ khảo sát đường đánh đổi khi thay phân vị P50 … P95; không chọn phân vị có chi phí thấp nhất trên test và không dùng khảo sát này làm khuyến nghị cho tương lai.
 
-**Gợi ý lý thuyết (bài toán newsvendor):** nếu 1 xe-giờ thiếu đắt gấp $r$ lần 1 xe-giờ thừa thì phân vị tối ưu là $q^* = r/(1+r)$, ví dụ $r = 3 \Rightarrow q^* = 0{,}75$. Khi bố trí theo ca, việc lấy **mức cao nhất trong ca** đã tạo thêm dự phòng, nên phân vị tối ưu thực tế thường **thấp hơn** $q^*$.
-
-*SARIMAX:* phân vị được suy ra từ khoảng 80% của mô hình theo giả định phân phối chuẩn. *LSTM:* dự báo cộng phân vị sai số validation 2025 theo giờ trong ngày. *Profile:* phân vị thực nghiệm 2025 theo (giờ, thứ).
+Giữ nguyên cách dựng phân vị từ lịch sử 2025: SARIMAX dùng khoảng 80% của mô hình; LSTM/Prophet dùng sai số validation theo giờ; Profile dùng phân vị theo (giờ, thứ). Chi phí 2026 chỉ mô tả hậu kiểm từng mức đã liệt kê.
 """)
 
 code(r"""
@@ -518,34 +521,18 @@ for m in MODELS:
 eval_q = pd.DataFrame(q_rows)
 eval_q.to_csv(OUT_DIR / "evaluation_quantiles.csv", index=False)
 
-cost_cols = [c for c in eval_q.columns if c.startswith("Chi phí")]
-best_q_rows = []
-for (pattern, m), g in eval_q.groupby(["Kiểu ca", "Nguồn dự báo"]):
-    for c in cost_cols:
-        r = g.loc[g[c].idxmin()]
-        best_q_rows.append({"Kiểu ca": pattern, "Nguồn dự báo": m, "Tỷ lệ chi phí": c.split("(")[1].rstrip(")"),
-                            "Phân vị tốt nhất": r["Phân vị"], "Chi phí": r[c],
-                            "Xe-giờ bố trí": r["Xe-giờ bố trí"], "% ca có giờ thiếu": r["% ca có giờ thiếu"]})
-best_q = pd.DataFrame(best_q_rows)
-best_q.to_csv(OUT_DIR / "best_quantile.csv", index=False)
-print(f"Phân vị cho chi phí thấp nhất (ρ = {RHO_BASE:.0%}):")
-display(best_q.set_index(["Kiểu ca", "Tỷ lệ chi phí", "Nguồn dự báo"]).sort_index())
+print("Khảo sát hậu kiểm P50–P95; không chọn phân vị tối ưu trên tập test.")
 """)
 
 md(r"""
-#### 🔎 Cách đọc bảng phân vị tốt nhất
-* Mỗi dòng trả lời câu hỏi: *"Nếu coi thiếu xe đắt gấp $r$ lần thừa xe, thì nên xếp xe theo phân vị nào của dự báo?"*
-* **Quy luật chung:** $r$ càng lớn (thiếu xe càng nghiêm trọng) thì phân vị tốt nhất càng cao (xếp nhiều xe hơn). Phân vị tối ưu thấp hơn công thức $r/(1+r)$, vì việc lấy mức cao nhất trong ca đã có sẵn dự phòng.
-* **Cột "% ca có giờ thiếu"** cho biết cái giá về rủi ro của lựa chọn đó.
-* **Các nguồn dự báo cho chi phí rất gần nhau**: chọn mô hình nào không quan trọng bằng **chọn phân vị** và **chọn kiểu ca**.
-
-**Bảng dưới** trình bày cùng kết quả theo góc nhìn của người ra quyết định: *"muốn tối đa X% số ca có giờ thiếu xe thì phải xếp bao nhiêu xe?"*
+#### 🔎 Cách đọc khảo sát hậu kiểm
+Các bảng dưới mô tả số xe và tỷ lệ thiếu đã xảy ra trên test ở từng phân vị. Không chọn lại phân vị từ các bảng này rồi báo cáo như một chính sách được chọn trước. Chỉ hai phương án Trung bình/P90 được dùng trong tóm tắt chính.
 """)
 
 code(r"""
 p8 = list(SHIFT_PATTERNS)[0]
 sub = eval_q[eval_q["Kiểu ca"] == p8].copy()
-sub["Xe TB/giờ"] = sub["Xe-giờ bố trí"] / len(ts_test)
+sub["Xe TB/giờ"] = sub["Xe-giờ bố trí"] / sub["Số giờ đánh giá"]
 risk = sub.pivot_table(index="Phân vị", columns="Nguồn dự báo", values="% ca có giờ thiếu").round(1)
 size = sub.pivot_table(index="Phân vị", columns="Nguồn dự báo", values="Xe TB/giờ").round(1)
 risk.index = [f"P{q * 100:.0f}" for q in risk.index]; size.index = risk.index
@@ -558,7 +545,7 @@ display(size)
 md(r"""
 #### 🔎 Cách đọc hai bảng trên
 * **Đọc theo dòng:** đi từ P50 xuống P95, % ca thiếu xe giảm dần, còn số xe phải bố trí tăng dần. Đây là **đường đánh đổi** giữa an toàn và chi phí.
-* **Ví dụ dùng bảng:** nếu thành phố chấp nhận tối đa khoảng 10% số ca có giờ thiếu xe → tìm dòng đầu tiên có giá trị ≤ 10 (thường quanh P90) → đọc số xe tương ứng ở bảng thứ hai.
+* **Giới hạn:** đây là hậu kiểm. Muốn chọn phân vị theo mức rủi ro hoặc chi phí cần giai đoạn chọn chính sách riêng, không dùng chính test này.
 * **Đọc theo cột:** ở cùng một phân vị, các nguồn dự báo cho kết quả gần như nhau.
 """)
 
@@ -583,7 +570,7 @@ for ax, pattern in zip(axes, SHIFT_PATTERNS):
                         textcoords="offset points", xytext=(5, 3), fontsize=7, color=colors[m])
     ax.set_xlabel("Tổng xe-giờ bố trí (nghìn) — đại diện chi phí")
     ax.set_ylabel("Xe-giờ thiếu (nghìn) — đại diện rủi ro")
-    ax.set_title(f"{pattern}, ρ = {RHO_BASE:.0%}\n(đường càng sát góc dưới-trái càng tốt)", fontsize=10)
+    ax.set_title(f"{pattern}, ρ = {RHO_BASE:.0%}\nKhảo sát hậu kiểm; không chọn phân vị trên test", fontsize=10)
     ax.grid(alpha=0.3); ax.legend(fontsize=8)
 fig.tight_layout(); fig.savefig(OUT_DIR / "tradeoff_quantiles.png", dpi=150, bbox_inches="tight"); plt.show()
 """)
@@ -594,7 +581,7 @@ md(r"""
 * **Mỗi đường** là một nguồn dự báo; **mỗi điểm** trên đường là một phân vị (P50 ở đầu trái-trên, P95 ở cuối phải-dưới).
 * Đường **nằm thấp hơn và lệch trái hơn** là tốt hơn: cùng chi phí thì ít thiếu xe hơn.
 * **Các đường gần như chồng lên nhau** → các mô hình tương đương nhau khi dùng để xếp ca.
-* **Hình dạng "khuỷu tay":** đoạn đầu (P50→P75) thêm ít xe mà giảm thiếu rất nhanh; đoạn cuối (P85→P95) thêm nhiều xe nhưng chỉ giảm thiếu chút ít. Vùng hợp lý thường nằm quanh **khuỷu**.
+* Không dùng hình dạng "khuỷu tay" trên test để chọn chính sách rồi tuyên bố hiệu quả độc lập. Đây chỉ là biểu đồ độ nhạy hậu kiểm.
 * So hai biểu đồ: các đường của 2 ca × 12h nằm **lệch phải** hơn, tức tốn nhiều xe-giờ hơn cho cùng mức thiếu.
 """)
 
@@ -653,7 +640,7 @@ Chi phí tính theo đơn vị "xe-giờ thừa" (1 xe-giờ thừa = 1; 1 xe-gi
 code(r"""
 cost_cols = [c for c in eval_shift.columns if c.startswith("Chi phí")]
 sub = eval_shift[eval_shift["ρ_max"] == RHO_BASE].set_index(["Kiểu ca", "Nguồn dự báo", "Kế hoạch theo"])[cost_cols]
-print(f"Chi phí tương đối theo ca, ρ = {RHO_BASE:.0%} (thấp hơn = tốt hơn); phương án tốt nhất mỗi cột:")
+print(f"Chi phí tương đối theo ca trên tập kiểm tra, ρ = {RHO_BASE:.0%}; chỉ xếp hạng hậu kiểm các phương án đã chốt:")
 for c in cost_cols:
     best = sub[c].idxmin()
     print(f"  {c:<26}: {' / '.join(best)}  ({sub[c].min():,.0f})")
@@ -663,7 +650,7 @@ display(sub)
 md(r"""
 #### 🔎 Cách đọc bảng chi phí
 * **Mỗi cột** là một giả định về mức nghiêm trọng của việc thiếu xe (2×, 3×, …, 20× so với thừa xe). **Số nhỏ hơn là tốt hơn.** Chỉ so các số **trong cùng một cột**.
-* Bảng này chỉ có hai cách lập (Trung bình và P90). Khi $r$ nhỏ, lập theo Trung bình rẻ hơn; khi $r$ lớn, P90 rẻ hơn. Phân vị ở giữa (Bước 5) thường còn tốt hơn cả hai.
+* Bảng này chỉ có hai cách lập (Trung bình và P90). Khi $r$ nhỏ, lập theo Trung bình rẻ hơn; khi $r$ lớn, P90 rẻ hơn. Bước 5 chỉ khảo sát hậu kiểm các mức phân vị khác, không dùng để chọn chính sách trên test.
 * **Tỷ lệ $r$ là quyết định chính sách**, dữ liệu không tự trả lời được. Với EMS, thiếu xe ảnh hưởng tính mạng nên $r$ thường được coi là lớn.
 """)
 
@@ -751,10 +738,10 @@ for pattern in SHIFT_PATTERNS:
             r = base[(base["Kiểu ca"] == pattern) & (base["Nguồn dự báo"] == m) & (base["Kế hoạch theo"] == basis)].iloc[0]
             print(f"   {m:<15} {basis:<10}: {r['Xe-giờ bố trí']:>8,.0f} xe-giờ | thiếu {r['Xe-giờ thiếu']:>6,.0f} xe-giờ"
                   f" | {r['% ca có giờ thiếu']:5.1f}% ca có giờ thiếu | chi phí {r[cost_col]:>8,.0f}")
-print(f"\n3. Phương án chi phí thấp nhất: {best['Nguồn dự báo']} — {best['Kế hoạch theo']} — {best['Kiểu ca']}"
+print(f"\n3. Phương án có chi phí thấp nhất trên tập kiểm tra và kịch bản này: {best['Nguồn dự báo']} — {best['Kế hoạch theo']} — {best['Kiểu ca']}"
       f" (chi phí {best[cost_col]:,.0f})")
 saving = (1 - best_model[cost_col] / ref[cost_col]) * 100
-print(f"   Mô hình dự báo tốt nhất: {best_model['Nguồn dự báo']} — {best_model['Kế hoạch theo']} — {best_model['Kiểu ca']}"
+print(f"   Mô hình có chi phí thấp nhất trong các phương án đã chốt trên tập kiểm tra: {best_model['Nguồn dự báo']} — {best_model['Kế hoạch theo']} — {best_model['Kiểu ca']}"
       f": chi phí {best_model[cost_col]:,.0f} vs baseline Profile 2025 cùng cách lập {ref[cost_col]:,.0f}"
       f" → {'giảm' if saving > 0 else 'tăng'} {abs(saving):.1f}%")
 sz = shift_size[(shift_size["Kiểu ca"] == best["Kiểu ca"]) & (shift_size["Nguồn dự báo"] == best["Nguồn dự báo"])
@@ -762,11 +749,7 @@ sz = shift_size[(shift_size["Kiểu ca"] == best["Kiểu ca"]) & (shift_size["Ng
 print("   Số xe mỗi ca (TB [ít nhất–nhiều nhất]): "
       + "; ".join(f"ca {r['Ca bắt đầu']}: {r['Xe TB']:.1f} [{r['Ít nhất']:.0f}–{r['Nhiều nhất']:.0f}]" for _, r in sz.iterrows()))
 
-bq = best_q[(best_q["Tỷ lệ chi phí"] == f"thiếu = {COST_RATIO}× thừa")]
-print(f"\n4. Nếu chọn phân vị kế hoạch tối ưu (Bước 5), thiếu = {COST_RATIO}× thừa:")
-for _, r in bq.sort_values(["Kiểu ca", "Chi phí"]).iterrows():
-    print(f"   {r['Kiểu ca'].split(' (')[0]:<10} {r['Nguồn dự báo']:<15}: P{r['Phân vị tốt nhất'] * 100:.0f} → chi phí {r['Chi phí']:>8,.0f}"
-          f" | {r['Xe-giờ bố trí']:>8,.0f} xe-giờ | {r['% ca có giờ thiếu']:5.1f}% ca có giờ thiếu")
+print("Đây là xếp hạng hậu kiểm, không phải khuyến nghị out-of-sample cho tương lai.")
 
 # Xuất lịch xe theo giờ của mọi phương án (ρ = RHO_BASE)
 export = pd.DataFrame({"timestamp": ts_test, "actual_dispatches": y_test.values,
@@ -775,6 +758,9 @@ for (m, basis), W in W_plan.items():
     export[f"plan_hourly | {m} | {basis}"] = hourly_plans[(m, basis, RHO_BASE)]
     for pattern in SHIFT_PATTERNS:
         export[f"plan_shift | {pattern.split(' (')[0]} | {m} | {basis}"] = shift_tables[(pattern, m, basis, RHO_BASE)][0].values
+for pattern in SHIFT_PATTERNS:
+    complete_plan, _ = shift_tables[(pattern, MODELS[0], "Trung bình", RHO_BASE)]
+    export[f"complete_shift | {pattern.split(' (')[0]}"] = complete_plan.notna().values
 export.to_csv(OUT_DIR / "vehicle_plans_hourly.csv", index=False)
 print(f"\nĐã lưu bảng & biểu đồ vào: {OUT_DIR}")
 """)
@@ -783,8 +769,8 @@ md(r"""
 #### 🔎 Cách dùng phần tóm tắt để ra quyết định
 1. **Mục 1** cho thấy độ chính xác dự báo; các nguồn gần như ngang nhau.
 2. **Mục 2** so hai cách lập cực đoan: theo Trung bình (ít xe, thiếu nhiều) và theo P90 (nhiều xe, hiếm thiếu), với cả hai kiểu ca.
-3. **Mục 3** nêu phương án rẻ nhất theo tỷ lệ chi phí đang chọn (`COST_RATIO`), và cho biết mô hình dự báo có thực sự hơn baseline hay không.
-4. **Mục 4** cho thấy nếu chọn phân vị tối ưu thì chi phí và rủi ro là bao nhiêu.
+3. **Mục 3** chỉ xếp hạng chi phí hậu kiểm trên tập kiểm tra và kịch bản này, không phải một chính sách đã được đánh giá độc lập sau lựa chọn.
+4. Không có bước chọn phân vị tối ưu trên test; khảo sát P50–P95 chỉ minh họa độ nhạy hậu kiểm.
 
 **Các quyết định nhóm cần chốt:** (a) tỷ lệ chi phí $r$, hoặc mức "% ca được phép thiếu xe"; (b) mức $\rho_{max}$; (c) kiểu ca. Sau khi chốt, sửa các biến ở cell cấu hình đầu notebook rồi **Run All**.
 """)
@@ -792,7 +778,8 @@ md(r"""
 md(r"""
 ### Hạn chế cần ghi trong báo cáo
 * **$\rho_{max}$ chỉ là kịch bản**: cùng một mức $\rho$, đội xe nhỏ (ca đêm) rủi ro hết xe cao hơn đội xe lớn. Bảng 7.3 (Erlang B) cho thấy mức chênh.
-* **Chi phí là tương đối** (đơn vị xe-giờ), chưa phải tiền thật; kết luận "phương án tốt nhất" thay đổi theo tỷ lệ thiếu/thừa (Bảng 7.1 và Bước 5).
+* **Chi phí là tương đối** (đơn vị xe-giờ), chưa phải tiền thật. Xếp hạng chỉ mô tả tập kiểm tra và kịch bản hiện tại, không phải bảo đảm cho tương lai.
+* **Mốc lập ca**: tại 00:00 cho các ca trong cùng ngày, chưa mô phỏng thông báo lịch trước ca. Chỉ chấm ca đủ giờ; phần cuối thiếu dữ liệu được ghi rõ, không thay bằng 0.
 * **Cận trên P90 của các nguồn được tạo khác nhau** (SARIMAX dùng khoảng tin cậy của mô hình; LSTM và Profile dùng phân vị thực nghiệm năm 2025). Xem cột "Độ phủ P90" ở Bước 1 để biết cận trên nào đúng mức hơn.
 * **Mốc fit tham số**: SARIMAX 24h, LSTM và Prophet học đến hết 2024; SARIMAX không refit bằng validation 2025. Quan sát lịch sử 2025 được dùng để cập nhật trạng thái/đặc trưng trước test 2026.
 * Chưa mô hình hóa vị trí trạm, thời gian di chuyển, hay ưu tiên cuộc gọi; số xe ở đây là **số xe sẵn sàng toàn thành phố**.
