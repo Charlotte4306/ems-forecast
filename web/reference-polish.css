@@ -1,0 +1,108 @@
+/* Frame, heading and interaction treatments informed by itscharlotte.tech.
+   Keep EMSForecast's existing palette, typography and data hierarchy. */
+:root{
+  --frame-depth:0 14px 30px -22px rgba(117,75,255,.32),0 4px 0 rgba(238,196,222,.32);
+  --button-depth:0 4px 0 rgba(117,75,255,.22);
+}
+.page{gap:24px}
+.page>.intro{gap:12px;margin:4px 0 0}
+.page>.intro h1{
+  align-self:flex-start;display:inline-block;max-width:100%;
+  font-size:clamp(28px,3.1vw,40px);line-height:1.15;letter-spacing:-.025em;
+  padding:.22em .48em;border:2px solid var(--glass-border);border-radius:999px;
+  background:var(--panel);box-shadow:0 3px 0 rgba(238,196,222,.24);
+}
+.page>.intro p{max-width:70ch;line-height:1.65}
+.page h2{font-weight:600;letter-spacing:-.015em}
+.card,.note-panel{
+  border:2px solid var(--glass-border);border-radius:24px;
+  background:rgba(255,255,255,.86);box-shadow:var(--frame-depth);
+}
+.ops-focus{grid-template-columns:minmax(0,1fr) 290px;gap:24px;margin-bottom:0}
+.ops-focus>.card{border-color:var(--border);padding:24px}
+.ops-focus>.card h2{font-size:21px;line-height:1.3;margin-bottom:10px}
+.ops-focus>.note-panel{border:3px solid var(--glass-border);padding:24px;transition:border-color .2s ease,box-shadow .2s ease}
+.ops-focus>.note-panel:hover{transform:none;border-color:rgba(238,196,222,.95);box-shadow:var(--frame-depth)}
+.ops-focus .note-panel .ops-peak-time{
+  align-self:flex-start;font-size:42px;line-height:1.1;letter-spacing:-.035em;
+  padding:8px 16px;border:2px solid var(--border);border-radius:18px;
+  background:var(--accent-soft);margin:0;
+}
+.ops-focus .note-panel strong{font-weight:600;color:var(--ink)}
+.ops-focus .note-panel p{line-height:1.7}
+.ops-summary{gap:0;padding:8px 0}
+.ops-summary .kpi{padding:4px 24px;background:none;border:0;border-right:1px solid var(--border);box-shadow:none;backdrop-filter:none;border-radius:0;transition:none}
+.ops-summary .kpi:first-child{padding-left:0}
+.ops-summary .kpi:hover{transform:none;box-shadow:none}
+.ops-summary .k-label{font-size:14px;color:var(--ink-2)}
+.ops-summary .k-value{font-size:38px;line-height:1.2;letter-spacing:-.025em;margin:10px 0}
+.ops-summary .kpi:first-child .k-value{font-size:46px;font-weight:600}
+.ops-summary .k-note{font-size:13px;line-height:1.5}
+.ops-secondary{gap:24px}
+.ops-secondary>.card{padding:22px;margin-bottom:0}
+.ops-flow{gap:10px;margin-left:28px;margin-right:28px}
+.ops-flow button{
+  position:relative;border:2px solid var(--border);border-radius:16px;
+  background:var(--panel);padding:13px 16px;
+  box-shadow:0 3px 0 rgba(238,196,222,.2);
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease;
+}
+.ops-flow button:not(:last-child)::after{content:'›';position:absolute;right:-10px;top:50%;transform:translateY(-50%);color:var(--ink-2);z-index:1;font-size:18px}
+.ops-flow button:hover{border-color:var(--accent);background:var(--panel-solid);transform:translateY(-3px);box-shadow:var(--button-depth)}
+.ops-flow button:active{transform:translateY(1px);box-shadow:none}
+.ops-flow button[aria-current=step]{border-color:var(--accent);background:var(--accent-soft);box-shadow:var(--button-depth)}
+.ops-flow button svg{transition:transform .2s ease}
+.ops-flow button:hover svg{transform:translateY(-2px) rotate(-5deg)}
+.ops-controls{margin-left:28px;margin-right:28px}
+.ops-controls select{border:2px solid var(--border);border-radius:10px;padding:9px 11px;transition:border-color .18s ease}
+.ops-controls select:hover{border-color:var(--accent)}
+.ops-controls+.sub{margin-left:28px;margin-right:28px}
+.btn-primary{
+  border:2px solid var(--accent);border-radius:999px;padding:11px 22px;
+  box-shadow:var(--button-depth);font-weight:500;
+  transition:transform .18s ease,box-shadow .18s ease,background .18s ease;
+}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 7px 0 rgba(117,75,255,.2)}
+.btn-primary:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(117,75,255,.2)}
+button:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+.ops-table th{border-bottom:2px dotted var(--border);padding-top:10px;padding-bottom:14px}
+.ops-table tbody tr{transition:background-color .16s ease}
+.ops-table tbody tr:hover{background:var(--accent-soft)}
+.ops-table td{padding-top:14px;padding-bottom:14px}
+.ops-details{overflow:hidden;padding:0!important;border:2px solid var(--glass-border);border-radius:20px;box-shadow:var(--frame-depth)}
+.ops-details>summary{position:relative;padding:18px 54px 18px 22px;list-style:none;font-size:16px;font-weight:500;background:var(--panel);transition:background .18s ease}
+.ops-details>summary::-webkit-details-marker{display:none}
+.ops-details>summary::after{content:'+';position:absolute;right:22px;top:50%;font-size:26px;line-height:1;transform:translateY(-50%);color:var(--accent);transition:transform .2s ease}
+.ops-details[open]>summary::after{transform:translateY(-50%) rotate(45deg)}
+.ops-details>summary:hover{background:var(--accent-soft)}
+.ops-details[open]>summary{margin-bottom:0;border-bottom:2px dotted var(--border)}
+.ops-details>div,.ops-details>p{margin:16px 22px}
+.ops-details .card{border:0;border-radius:0;box-shadow:none;background:none;padding:0}
+.ops-heat-card>.ops-details{border:0;border-top:1px solid var(--border);border-radius:0;box-shadow:none;overflow-x:auto;background:none}
+.ops-heat-card>.ops-details>summary{padding-left:0;background:none;font-size:14px}
+.ops-heat-card>.ops-details>summary::after{right:4px}
+.ops-heat-card .ops-details>.heatmap{margin:12px 0}
+.ops-cost-value{align-self:flex-start;font-size:48px;letter-spacing:-.03em}
+.ops-press-dot{position:fixed;width:7px;height:7px;border-radius:50%;pointer-events:none;z-index:20;animation:ops-feedback .48s ease-out both}
+@keyframes ops-feedback{from{opacity:.85;transform:translate(0,0) scale(.8)}to{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.3)}}
+@keyframes ops-heading-enter{from{opacity:.3;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+body.data-ready:not(.reduce-motion) .page.active>.intro h1{animation:ops-heading-enter .55s cubic-bezier(.18,.7,.2,1) both}
+@media(max-width:1100px){.ops-focus{grid-template-columns:minmax(0,1fr)}.ops-focus .note-panel .ops-peak-time{font-size:36px}}
+@media(max-width:650px){
+  .page{gap:20px}.page>.intro h1{border-radius:18px;font-size:28px;padding:8px 12px;letter-spacing:-.02em}
+  .ops-flow,.ops-controls{margin-left:16px;margin-right:16px}.ops-controls+.sub{margin-left:16px;margin-right:16px}
+  .ops-flow button{padding:10px 12px;border-radius:12px}.ops-flow button::after{display:none}
+  .ops-summary .kpi{padding:12px 0;border-right:0;border-bottom:1px solid var(--border)}
+  .ops-summary .kpi:last-child{border:0}.ops-summary .k-value{font-size:32px}.ops-summary .kpi:first-child .k-value{font-size:38px}
+  .ops-focus>.card,.ops-focus>.note-panel,.ops-secondary>.card{padding:18px;border-radius:20px}
+  .ops-details>summary{padding:16px 44px 16px 16px;font-size:15px}.ops-details>summary::after{right:16px}
+  .ops-details>div,.ops-details>p{margin:14px 16px}
+}
+body.reduce-motion .ops-flow button,body.reduce-motion .ops-flow svg,body.reduce-motion .btn-primary,body.reduce-motion .ops-details>summary,body.reduce-motion .ops-details>summary::after,body.reduce-motion .ops-table tr{transition:none}
+body.reduce-motion .ops-flow button:hover,body.reduce-motion .ops-flow button:active,body.reduce-motion .ops-flow button:hover svg,body.reduce-motion .btn-primary:hover,body.reduce-motion .btn-primary:active{transform:none}
+body.reduce-motion .ops-press-dot{display:none}
+@media(prefers-reduced-motion:reduce){
+  .ops-flow button,.ops-flow svg,.btn-primary,.ops-details>summary,.ops-details>summary::after,.ops-table tr{transition:none!important}
+  .ops-flow button:hover,.ops-flow button:active,.ops-flow button:hover svg,.btn-primary:hover,.btn-primary:active{transform:none!important}
+  .ops-press-dot{display:none}body.data-ready .page.active>.intro h1{animation:none!important}
+}

@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light" />
+<link rel="icon" href="data:," />
+<link rel="stylesheet" href="/assets/fonts.css"><title>EMSForecast — Dự báo nhu cầu và kế hoạch xe</title>
+
+
+
+<link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/template-bindings.css"><link rel="stylesheet" href="/operations.css"><link rel="stylesheet" href="/reference-polish.css"><link rel="stylesheet" href="/zenless.css">
+</head>
+<body>
+
+<!-- ============ Lớp nền pastel loang chuyển động (dưới cùng) ============ -->
+<div class="bg-scene" aria-hidden="true">
+  <div class="blob b1" data-depth="12"></div>
+  <div class="blob b2" data-depth="-16"></div>
+  <div class="blob b3" data-depth="10"></div>
+  <div class="blob b4" data-depth="-10"></div>
+  <div class="blob b5" data-depth="14"></div>
+  <svg class="reference-inline-1 heart" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+  <svg class="reference-inline-2 heart" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+  <svg class="reference-inline-3 heart" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+  <svg class="reference-inline-4 heart" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+  <div class="reference-inline-5 cloud"></div>
+  <div class="reference-inline-6 cloud"></div>
+  <div class="reference-inline-7 cloud"></div>
+  <span class="reference-inline-8 dot"></span>
+  <span class="reference-inline-9 dot pink"></span>
+  <span class="reference-inline-10 dot lav"></span>
+  <span class="reference-inline-11 dot blue"></span>
+  <span class="reference-inline-12 dot"></span>
+  <span class="reference-inline-13 dot pink"></span>
+  <svg class="bg-waves" viewBox="0 0 1440 170" preserveAspectRatio="none">
+    <path class="w1" d="M-120 100 C120 45 300 135 560 95 C820 55 1000 130 1260 90 C1380 72 1480 95 1560 82 L1560 170 L-120 170 Z" fill="rgba(178,216,247,.55)"/>
+    <path class="w2" d="M-120 128 C140 86 340 155 600 122 C860 90 1060 152 1300 118 C1420 102 1500 120 1560 110 L1560 170 L-120 170 Z" fill="rgba(199,178,246,.5)"/>
+    <path class="reference-inline-14 w1" d="M-120 148 C160 116 380 168 640 142 C900 118 1100 166 1320 140 C1440 126 1500 142 1560 134 L1560 170 L-120 170 Z" fill="rgba(168,230,203,.45)"/>
+  </svg>
+</div>
+
+<div class="layout">
+
+  <!-- ============ SIDEBAR (224px) ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M3 12h4l2.5-6 4 12L16 12h5"/></svg>
+      </div>
+      <div class="name">EMSForecast</div>
+    </div>
+
+    <nav class="nav" aria-label="Màn hình">
+      <div class="nav-label">KHÔNG GIAN LÀM VIỆC</div>
+      <button class="active" data-screen="tongquan" aria-current="page">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        Tổng quan
+        <span class="ind" aria-hidden="true"></span>
+      </button>
+      <button data-screen="dubao">
+        <svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 6-8"/><path d="M14 6h4v4"/></svg>
+        Dự báo nhu cầu
+      </button>
+      <button data-screen="kehoach">
+        <svg viewBox="0 0 24 24"><path d="M3 17h18M5 17V9l7-5 7 5v8"/><path d="M12 8v4M10 10h4"/></svg>
+        Kế hoạch xe
+      </button>
+      <button data-screen="chiphi">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7v10M15 9.5c-.6-1-1.7-1.5-3-1.5-1.7 0-3 .9-3 2.2 0 3 6 1.6 6 4 0 1.3-1.3 2.3-3 2.3-1.4 0-2.6-.6-3.2-1.7"/></svg>
+        Chi phí kịch bản
+      </button>
+      <button data-screen="danhgia">
+        <svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>
+        Đánh giá mô hình
+      </button>
+      <button data-screen="daily">Dự báo 7 ngày</button>
+      <button data-screen="lichsu">
+        <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5.5" rx="7" ry="2.8"/><path d="M5 5.5v13c0 1.6 3.1 2.8 7 2.8s7-1.2 7-2.8v-13"/><path d="M5 12c0 1.6 3.1 2.8 7 2.8s7-1.2 7-2.8"/></svg>
+        Dữ liệu lịch sử
+      </button>
+      <button data-screen="caidat">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z"/></svg>
+        Cài đặt
+      </button>
+    </nav>
+
+    <div class="side-context">
+      <div class="ctx-head">KHÔNG GIAN NGHIÊN CỨU</div>
+      <div>
+        <p>San Francisco</p>
+        <p>Số liệu minh họa</p>
+      </div>
+      <div>Chưa kết nối dữ liệu thật</div>
+    </div>
+
+    <div class="side-footer">
+      <div>Bản mẫu học thuật · v0.9</div>
+      <div>Thời gian theo dữ liệu nguồn</div>
+    </div>
+  </aside>
+
+  <!-- ============ WORKSPACE (1216px) ============ -->
+  <div class="workspace">
+
+    <header class="topbar">
+      <div class="crumb" id="crumb">Tổng quan</div>
+      <div class="filters" id="topbar-filters">
+        <div class="control">
+          <span class="num">01–28/09/2026</span>
+          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        </div>
+        <div class="control">
+          <span>San Francisco</span>
+          <svg viewBox="0 0 24 24"><path d="M12 21s-6.5-5.3-6.5-10.4A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.6C18.5 15.7 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/></svg>
+        </div>
+        <div class="freshness">
+          <span class="dot-s" aria-hidden="true"></span>
+          <span class="num">Mẫu: 29/09 · 00:05</span>
+        </div>
+        <div class="profile">
+          <div class="avatar" aria-hidden="true">AL</div>
+          <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+      </div>
+    </header>
+
+    <main id="screens">
+    <div class="page" id="screen-daily">
+      <div class="intro"><h1>Dự báo 7 ngày</h1><p>Lượt điều động xe tại San Francisco · Gom theo giờ nhận cuộc gọi · Cập nhật mỗi ngày.</p></div>
+      <section class="card live-status"><h2>Dữ liệu mới, dự báo mới</h2><p id="live-status" role="status">Đang tải dự báo cập nhật…</p><p id="live-source" class="sub"></p><button type="button" class="btn-ghost" id="live-refresh">Tải lại kết quả</button></section>
+      <div class="live-days" id="live-days" aria-label="Chọn ngày dự báo"></div>
+      <section class="card" id="live-hourly" hidden><h2 id="live-day-title"></h2><p class="sub">Ước tính cả ngày theo giờ địa phương San Francisco. Chọn một ngày ở trên để xem chi tiết.</p><div id="live-chart" class="live-chart"></div><details class="live-table"><summary>Xem số liệu từng giờ</summary><div id="live-hour-table"></div></details></section>
+      <section class="card"><h2>Cách đọc dự báo</h2><p>Mỗi bản ghi điều động có RowID riêng được tính một lượt, gắn với giờ nhận cuộc gọi (received_dttm), cùng quy ước với dữ liệu huấn luyện của nhóm. Một cuộc gọi điều hai xe được tính hai lượt; một xe có thể được điều nhiều lần. Lượt điều động không đồng nghĩa với số xe cần trực.</p><p class="sub">Phạm vi nghiên cứu: các xe có unit_type = MEDIC trong dữ liệu San Francisco. Dữ liệu nguồn có thể đến trễ hoặc được điều chỉnh.</p><p class="sub" id="live-model">Dự báo tự động được lưu riêng với thí nghiệm lịch sử. Kết quả tương lai chưa có số thực tế để tính sai số.</p><p class="sub">Ngày đổi giờ mùa hè dùng 24 ô giờ mô hình; không quy đổi thành 24 giờ vận hành thực tế. Đây là ước tính nghiên cứu hỗ trợ lập kế hoạch.</p><p class="sub"><a href="https://data.sf.gov/d/nuek-vuh3" target="_blank" rel="noopener">Nguồn dữ liệu mở DataSF</a> · Lịch cập nhật: 07:00 mỗi ngày, giờ San Francisco.</p></section>
+    </div>
+    <div class="page active" id="screen-tongquan">
+
+      <!-- Banner trạng thái dữ liệu -->
+      <div class="banner">
+        <div class="b-label">SỐ LIỆU MINH HỌA</div>
+        <div class="b-text">San Francisco · 01–28/09/2026 · Chưa phải kết quả từ dữ liệu thật</div>
+      </div>
+
+      <!-- Giới thiệu -->
+      <div class="intro">
+        <h1>Tổng quan vận hành</h1>
+        <p>Theo dõi lượt điều động xe, nhịp nhu cầu theo giờ và đầu vào cho kế hoạch xe.</p>
+      </div>
+
+      <!-- 4 thẻ chỉ số -->
+      <section class="kpis" aria-label="Chỉ số lượt điều động">
+        <div class="kpi">
+          <div class="k-label">Tổng lượt điều động xe</div>
+          <div class="k-value num" data-count="6720" data-suffix=" lượt">6.720 lượt</div>
+          <div class="k-note">↗ 6,7% so với kỳ trước (6.300 lượt)</div>
+        </div>
+        <div class="kpi">
+          <div class="k-label">Lượt điều động trung bình/ngày</div>
+          <div class="k-value num" data-count="240" data-suffix=" lượt/ngày">240 lượt/ngày</div>
+          <div class="k-note">↗ 15 lượt/ngày so với kỳ trước</div>
+        </div>
+        <div class="kpi">
+          <div class="k-label">Thời gian xe bận trung bình</div>
+          <div class="k-value num" data-count="45" data-suffix=" phút">45 phút</div>
+          <div class="k-note">Minh họa · Không phải thời gian đáp ứng</div>
+        </div>
+        <div class="kpi">
+          <div class="k-label">Lượt điều động dự báo · Ngày được chọn</div>
+          <div class="k-value num" data-count="274" data-suffix=" lượt">274 lượt</div>
+          <div class="k-note num">29/09/2026 · Dự báo mẫu 24 giờ</div>
+        </div>
+      </section>
+
+      <!-- Xu hướng lượt điều động -->
+      <section class="card">
+        <h2>Xu hướng lượt điều động</h2>
+        <p class="sub">Lượt/giờ · Quan sát minh họa 28/09 và dự báo mẫu 29/09 · Prophet</p>
+        <p class="chart-legend">━━ Quan sát minh họa     ┄┄ Dự báo minh họa     │ Bắt đầu dự báo: 29/09 · 00:00</p>
+        <div class="chart-wrap">
+          <svg class="chart" id="chart" viewBox="0 0 1120 250" role="img" aria-label="Biểu đồ lượt điều động theo giờ: quan sát ngày 28/09 cao nhất 18 lượt lúc 16 giờ; dự báo ngày 29/09 đạt đỉnh 20 lượt lúc 18 giờ"></svg>
+        </div>
+        <p class="chart-note">Khoảng bất định: chưa cung cấp trong phiên bản hiện tại.</p>
+      </section>
+
+      <!-- Nhịp điều động theo thứ và giờ -->
+      <section class="card">
+        <h2>Nhịp điều động theo thứ và giờ</h2>
+        <p class="sub">Số liệu minh họa · Trung bình lượt/giờ · Không phân chia theo khu vực giả định</p>
+        <div class="heatmap" id="heatmap" role="img" aria-label="Heatmap trung bình lượt điều động theo thứ trong tuần và giờ trong ngày, cao điểm là ô màu cam vào cuối buổi chiều các ngày Thứ Tư tới Chủ nhật"></div>
+        <p class="hm-note">Mức nhu cầu: thấp → cao · Màu cam: cao điểm · Đơn vị: lượt/giờ</p>
+      </section>
+
+      <!-- Cao điểm và diễn giải -->
+      <div class="peak-wrap">
+        <section class="card">
+          <h2>Các khung giờ nhu cầu cao</h2>
+          <p class="sub">29/09/2026 · Dự báo mẫu, không suy trực tiếp thành số xe</p>
+          <div class="tbl" role="table" aria-label="Các khung giờ nhu cầu cao ngày 29/09/2026">
+            <div class="trow head peak-grid" role="row">
+              <div class="tcell" role="columnheader">Khung giờ</div>
+              <div class="tcell" role="columnheader">Lượt dự báo</div>
+              <div class="tcell" role="columnheader">Đơn vị</div>
+            </div>
+            <div class="trow peak-grid" role="row">
+              <div class="tcell num" data-label="Khung giờ" role="cell">08:00–09:00</div>
+              <div class="tcell num" data-label="Lượt dự báo" role="cell">16</div>
+              <div class="tcell" data-label="Đơn vị" role="cell">lượt/giờ</div>
+            </div>
+            <div class="trow peak-grid" role="row">
+              <div class="tcell num" data-label="Khung giờ" role="cell">17:00–18:00</div>
+              <div class="tcell num" data-label="Lượt dự báo" role="cell">19</div>
+              <div class="tcell" data-label="Đơn vị" role="cell">lượt/giờ</div>
+            </div>
+            <div class="trow peak-grid" role="row">
+              <div class="tcell num" data-label="Khung giờ" role="cell">18:00–19:00</div>
+              <div class="tcell num" data-label="Lượt dự báo" role="cell">20</div>
+              <div class="tcell" data-label="Đơn vị" role="cell">lượt/giờ</div>
+            </div>
+            <div class="trow peak-grid" role="row">
+              <div class="tcell num" data-label="Khung giờ" role="cell">19:00–20:00</div>
+              <div class="tcell num" data-label="Lượt dự báo" role="cell">16</div>
+              <div class="tcell" data-label="Đơn vị" role="cell">lượt/giờ</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="note-panel">
+          <h2>Lưu ý khi lập kế hoạch xe</h2>
+          <p>Lượt điều động không đồng nghĩa với số xe cần trực. Năng lực xe phụ thuộc thời gian bận và công việc kéo dài từ giờ trước.</p>
+          <p>Chưa đánh giá thiếu xe: bộ tính năng lực chưa được kết nối. Không lấy số lượt dự báo trừ số xe có thể bố trí.</p>
+          <p>Đỉnh minh họa: 20 lượt/giờ lúc 18:00. Đây là tín hiệu nhu cầu, không phải yêu cầu 20 xe.</p>
+        </section>
+      </div>
+
+      <!-- Ba đại lượng cần phân biệt -->
+      <section class="card">
+        <h2>Ba đại lượng cần phân biệt</h2>
+        <div class="tbl" role="table" aria-label="Ba đại lượng cần phân biệt">
+          <div class="trow head def-grid" role="row">
+            <div class="tcell" role="columnheader">Đại lượng</div>
+            <div class="tcell" role="columnheader">Cách xác định</div>
+            <div class="tcell" role="columnheader">Đơn vị</div>
+          </div>
+          <div class="trow def-grid" role="row">
+            <div class="tcell" data-label="Đại lượng" role="cell">Số cuộc gọi</div>
+            <div class="tcell" data-label="Cách xác định" role="cell">Đếm mã cuộc gọi khác nhau</div>
+            <div class="tcell" data-label="Đơn vị" role="cell">cuộc gọi / cuộc gọi/giờ</div>
+          </div>
+          <div class="trow def-grid" role="row">
+            <div class="tcell" data-label="Đại lượng" role="cell">Lượt điều động xe</div>
+            <div class="tcell" data-label="Cách xác định" role="cell">Đếm các lượt xe được điều động</div>
+            <div class="tcell" data-label="Đơn vị" role="cell">lượt / lượt/giờ</div>
+          </div>
+          <div class="trow def-grid" role="row">
+            <div class="tcell" data-label="Đại lượng" role="cell">Số xe cần trực</div>
+            <div class="tcell" data-label="Cách xác định" role="cell">Kết quả tính năng lực từ khối lượng xe bận</div>
+            <div class="tcell" data-label="Đơn vị" role="cell">xe</div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="page-foot">EMSForecast · San Francisco · Số liệu minh họa · Thời gian theo dữ liệu nguồn</footer>
+    </div>
+    <!-- ================= MÀN: DỰ BÁO NHU CẦU ================= -->
+    <div class="page" id="screen-dubao">
+      <div class="banner">
+        <div class="b-label">SỐ LIỆU MINH HỌA</div>
+        <div class="b-text">San Francisco · Dự báo lượt điều động xe · Không phải kết quả chạy thực tế</div>
+      </div>
+      <div class="intro">
+        <h1>Dự báo nhu cầu</h1>
+        <p>Dự báo cả ngày từ một thời điểm, không cập nhật số thực tế trong ngày đang dự báo.</p>
+      </div>
+      <section class="card">
+        <h2>Cấu hình dự báo</h2>
+        <p class="sub">Chân trời hiện hỗ trợ: 24 giờ · Độ chi tiết: theo giờ</p>
+        <div class="seg-row" role="group" aria-label="Chân trời dự báo">
+          <span class="seg sel">24 giờ · Đã chọn</span>
+          <span class="seg dim">7 ngày · Chưa hỗ trợ</span>
+          <span class="seg dim">30 ngày · Chưa hỗ trợ</span>
+        </div>
+        <div class="field-grid">
+          <div class="field">
+            <div class="f-label">Mô hình</div>
+            <div class="value-box"><span>Prophet</span><span aria-hidden="true">▾</span></div>
+            <p class="reference-inline-15 sub">Các lựa chọn: SARIMAX · Prophet · LSTM</p>
+          </div>
+          <div class="field">
+            <div class="f-label">Độ chi tiết</div>
+            <p class="reference-inline-16">Theo giờ · Ngày dự báo: 29/09/2026</p>
+          </div>
+        </div>
+        <div class="reference-inline-17">
+          <button class="btn-primary" id="btn-forecast" type="button">Tạo dự báo</button>
+        </div>
+        <div class="mini-grid c3">
+          <div class="mini"><div class="m-label">Thời điểm phát hành</div><div class="reference-inline-18 m-value num">29/09/2026 · 00:00</div></div>
+          <div class="mini"><div class="m-label">Khung lịch sử cuối đã biết</div><div class="reference-inline-18 m-value num">28/09/2026 · 23:00–24:00</div></div>
+          <div class="mini"><div class="m-label">Ngày được dự báo</div><div class="reference-inline-18 m-value num">29/09/2026 · 00:00–24:00</div></div>
+        </div>
+        <p class="sub">Lịch sử đầu vào: 01–28/09/2026 · Thời gian theo dữ liệu nguồn</p>
+      </section>
+      <div class="banner green stack">
+        <div class="b-title">Đã chuẩn bị 24 khoảng dự báo mẫu</div>
+        <div class="b-text">Tổng: 274 lượt điều động. Chỉ minh họa giao diện; chưa gọi dịch vụ dự báo thực tế.</div>
+      </div>
+      <section class="card">
+        <h2>Lượt điều động quan sát và dự báo</h2>
+        <p class="sub">Đơn vị: lượt/giờ · Prophet · Dự báo mẫu cả ngày 29/09</p>
+        <p class="chart-legend">━━ Quan sát minh họa     ┄┄ Dự báo minh họa     │ Bắt đầu dự báo: 29/09 · 00:00</p>
+        <div class="chart-wrap"><svg class="chart" id="chart-dubao" viewBox="0 0 1120 250" role="img" aria-label="Biểu đồ quan sát ngày 28/09 và dự báo ngày 29/09, đỉnh dự báo 20 lượt lúc 18 giờ"></svg></div>
+        <p class="chart-note">Khoảng bất định: chưa cung cấp trong phiên bản hiện tại.</p>
+      </section>
+      <section class="card">
+        <h2>Kết quả dự báo</h2>
+        <p class="sub">Trích 6/24 khoảng theo giờ · Chưa có thực tế trong ngày tương lai → hiển thị —</p>
+        <div class="tbl" role="table" aria-label="Kết quả dự báo trích 6 khoảng giờ">
+          <div class="trow head fc-grid" role="row"><div class="tcell" role="columnheader">Thời gian</div><div class="tcell" role="columnheader">Lượt điều động thực tế</div><div class="tcell" role="columnheader">Lượt điều động dự báo</div><div class="tcell" role="columnheader">Sai lệch</div></div>
+          <div class="trow fc-grid" role="row"><div class="tcell num" data-label="Thời gian">29/09 · 00:00–01:00</div><div class="tcell" data-label="Thực tế">—</div><div class="tcell num" data-label="Dự báo">7</div><div class="tcell" data-label="Sai lệch">—</div></div>
+          <div class="trow fc-grid" role="row"><div class="tcell num" data-label="Thời gian">29/09 · 01:00–02:00</div><div class="tcell" data-label="Thực tế">—</div><div class="tcell num" data-label="Dự báo">6</div><div class="tcell" data-label="Sai lệch">—</div></div>
+          <div class="trow fc-grid" role="row"><div class="tcell num" data-label="Thời gian">29/09 · 02:00–03:00</div><div class="tcell" data-label="Thực tế">—</div><div class="tcell num" data-label="Dự báo">5</div><div class="tcell" data-label="Sai lệch">—</div></div>
+          <div class="trow fc-grid" role="row"><div class="tcell num" data-label="Thời gian">29/09 · 08:00–09:00</div><div class="tcell" data-label="Thực tế">—</div><div class="tcell num" data-label="Dự báo">16</div><div class="tcell" data-label="Sai lệch">—</div></div>
+          <div class="trow fc-grid" role="row"><div class="tcell num" data-label="Thời gian">29/09 · 17:00–18:00</div><div class="tcell" data-label="Thực tế">—</div><div class="tcell num" data-label="Dự báo">19</div><div class="tcell" data-label="Sai lệch">—</div></div>
+          <div class="trow fc-grid" role="row"><div class="tcell num" data-label="Thời gian">29/09 · 18:00–19:00</div><div class="tcell" data-label="Thực tế">—</div><div class="tcell num" data-label="Dự báo">20</div><div class="tcell" data-label="Sai lệch">—</div></div>
+        </div>
+        <p class="sub">Sai lệch = Dự báo − Thực tế. Âm là dự báo thiếu, dương là dự báo thừa. Chưa có thực tế thì chưa tính sai lệch.</p>
+        <p class="link-accent">Bảng so sánh và giải thích mô hình được trình bày tại màn Đánh giá mô hình.</p>
+      </section>
+      <section class="card">
+        <h2>Trạng thái hiển thị</h2>
+        <p class="sub">Mẫu tĩnh · Chưa có tương tác</p>
+        <div class="status-grid">
+          <div class="status-cell blue"><div class="s-title">Đang tải</div><div class="s-note">Đang chuẩn bị dự báo cả ngày…</div></div>
+          <div class="status-cell lav"><div class="s-title">Không có dữ liệu</div><div class="s-note">Chọn khung lịch sử khác.</div></div>
+          <div class="status-cell rose"><div class="s-title">Lỗi dịch vụ</div><div class="s-note">Giữ nguyên kết quả mẫu trước.</div></div>
+          <div class="status-cell green"><div class="s-title">Đã có kết quả mẫu</div><div class="s-note">24 khoảng theo giờ sẵn sàng.</div></div>
+        </div>
+      </section>
+      <footer class="page-foot">EMSForecast · San Francisco · Số liệu minh họa · Thời gian theo dữ liệu nguồn</footer>
+    </div>
+
+    <!-- ================= MÀN: KẾ HOẠCH XE ================= -->
+    <div class="page" id="screen-kehoach">
+      <div class="banner warn stack">
+        <div class="reference-inline-19 b-label">Minh họa — chưa kết nối tính năng lực</div>
+        <div class="b-text">Chưa có kết quả số xe cần trực từ dữ liệu. Không dùng màn hình này để quyết định bố trí xe thực tế.</div>
+      </div>
+      <div class="intro">
+        <h1>Kế hoạch xe</h1>
+        <p>Chuyển nhu cầu điều động thành khối lượng xe bận, sau đó mới ước tính số xe cần trực.</p>
+      </div>
+      <section class="card">
+        <h2>Luồng tính năng lực</h2>
+        <p class="sub">Ngày được chọn: 29/09/2026 · Thời gian theo dữ liệu nguồn</p>
+        <div class="mini-grid c3">
+          <div class="mini"><div class="m-label">01 · Lượt điều động dự báo</div><div class="m-value big num">274 lượt / ngày</div><div class="m-note">Dự báo mẫu 24 giờ · Đơn vị theo giờ: lượt/giờ</div></div>
+          <div class="mini"><div class="m-label">02 · Khối lượng xe bận ước tính</div><div class="m-value accent">Chờ bộ tính</div><div class="m-note">Xe-giờ bận · Có phần việc kéo dài từ giờ trước</div></div>
+          <div class="mini"><div class="m-label">03 · Số xe cần trực</div><div class="m-value accent">Chờ bộ tính</div><div class="m-note">Đơn vị: xe · Có xét mức sử dụng mục tiêu</div></div>
+        </div>
+        <p class="reference-inline-20">Lượt điều động dự báo → Khối lượng xe bận ước tính → Số xe cần trực</p>
+      </section>
+      <section class="card">
+        <h2>Tham số và nguồn đầu vào</h2>
+        <p class="sub">Tách riêng ước lượng từ lịch sử, giả định kịch bản và giá trị do người dùng nhập</p>
+        <div class="mini-grid c3">
+          <div class="mini"><div class="m-label">Thời gian xe bận</div><div class="value-box big num">— phút</div><div class="m-note">Ước lượng từ lịch sử · Chờ kết nối dữ liệu</div></div>
+          <div class="mini"><div class="m-label">Mức sử dụng mục tiêu</div><div class="value-box big num">75%</div><div class="m-note">Giả định kịch bản · Có thể điều chỉnh</div></div>
+          <div class="mini"><div class="m-label">Số xe có thể bố trí</div><div class="value-box big num">16 xe</div><div class="m-note">Người dùng nhập / kịch bản · Không phải nguồn lực thực tế</div></div>
+        </div>
+      </section>
+      <section class="card">
+        <h2>Số xe cần trực ước tính và số xe có thể bố trí</h2>
+        <p class="sub">Số liệu minh họa · Cả hai đường cùng đơn vị: xe · Không lấy lượt/giờ làm số xe</p>
+        <p class="chart-legend">┄┄ Nét đứt violet: số xe cần trực ước tính (minh họa)     ━━ Xám đậm: số xe có thể bố trí (kịch bản)</p>
+        <div class="chart-wrap"><svg class="chart" id="chart-kehoach" viewBox="0 0 1120 250" role="img" aria-label="Biểu đồ minh họa: đường số xe có thể bố trí thẳng ở mức 16 xe, đường số xe cần trực ước tính cong và vượt 16 xe vào khoảng 17 đến 20 giờ"></svg></div>
+        <p class="chart-note warn-text">Các đường chỉ minh họa cách đọc biểu đồ; không được tính từ dự báo 274 lượt. Chưa kết nối tính năng lực.</p>
+      </section>
+      <section class="card">
+        <h2>Kế hoạch xe theo khung giờ</h2>
+        <p class="sub">Chưa có kết quả tính · Không tự suy số xe thiếu từ lượt điều động</p>
+        <div class="tbl" role="table" aria-label="Kế hoạch xe theo khung giờ">
+          <div class="trow head plan-grid" role="row"><div class="tcell" role="columnheader">Khung giờ</div><div class="tcell" role="columnheader">Khối lượng xe bận</div><div class="tcell" role="columnheader">Xe cần trực ước tính</div><div class="tcell" role="columnheader">Xe có thể bố trí</div><div class="tcell" role="columnheader">Thiếu / dư</div></div>
+          <div class="trow plan-grid" role="row"><div class="tcell num" data-label="Khung giờ">00:00–06:00</div><div class="tcell" data-label="Khối lượng xe bận">— xe-giờ</div><div class="tcell" data-label="Xe cần trực ước tính">— xe</div><div class="tcell" data-label="Xe có thể bố trí">16 xe · Kịch bản</div><div class="tcell" data-label="Thiếu / dư">—</div></div>
+          <div class="trow plan-grid" role="row"><div class="tcell num" data-label="Khung giờ">06:00–12:00</div><div class="tcell" data-label="Khối lượng xe bận">— xe-giờ</div><div class="tcell" data-label="Xe cần trực ước tính">— xe</div><div class="tcell" data-label="Xe có thể bố trí">16 xe · Kịch bản</div><div class="tcell" data-label="Thiếu / dư">—</div></div>
+          <div class="trow plan-grid" role="row"><div class="tcell num" data-label="Khung giờ">12:00–18:00</div><div class="tcell" data-label="Khối lượng xe bận">— xe-giờ</div><div class="tcell" data-label="Xe cần trực ước tính">— xe</div><div class="tcell" data-label="Xe có thể bố trí">16 xe · Kịch bản</div><div class="tcell" data-label="Thiếu / dư">—</div></div>
+          <div class="trow plan-grid" role="row"><div class="tcell num" data-label="Khung giờ">18:00–24:00</div><div class="tcell" data-label="Khối lượng xe bận">— xe-giờ</div><div class="tcell" data-label="Xe cần trực ước tính">— xe</div><div class="tcell" data-label="Xe có thể bố trí">16 xe · Kịch bản</div><div class="tcell" data-label="Thiếu / dư">—</div></div>
+        </div>
+      </section>
+      <section class="reference-inline-21 note-panel">
+        <h2>Phương án bố trí xe</h2>
+        <p class="reference-inline-22 sub">Chưa đề xuất phân bổ khi chưa có bộ tính</p>
+        <p>Chờ hoàn thiện phương pháp tính năng lực và kiểm tra công việc kéo dài giữa các giờ. Kết quả sau này cần đối chiếu với phạm vi phục vụ, thời gian xe bận và nguồn lực có thể bố trí.</p>
+        <p>Phần nhân sự tạm ẩn. Màn này chỉ phân tích xe, không suy trực tiếp số nhân viên từ nhu cầu điều động.</p>
+      </section>
+      <footer class="page-foot">EMSForecast · San Francisco · Số liệu minh họa · Thời gian theo dữ liệu nguồn</footer>
+    </div>
+
+    <!-- ================= MÀN: CHI PHÍ KỊCH BẢN ================= -->
+    <div class="page" id="screen-chiphi">
+      <div class="banner warn stack">
+        <div class="reference-inline-19 b-label">Chưa kết nối tính năng lực và chi phí</div>
+        <div class="b-text">Chỉ thiết lập giả định phân tích. Chưa có kết quả so sánh chi phí giữa các mô hình.</div>
+      </div>
+      <div class="intro">
+        <h1>Chi phí kịch bản</h1>
+        <p>Phân tích đánh đổi giữa xe-giờ thiếu và xe-giờ dư trên cùng kịch bản bố trí xe.</p>
+      </div>
+      <section class="card">
+        <h2>Giả định chi phí</h2>
+        <p class="sub">Ngày phân tích: 29/09/2026 · Kịch bản nguồn lực: 16 xe có thể bố trí · Số liệu minh họa</p>
+        <div class="reference-inline-23 mini-grid">
+          <div class="mini"><div class="reference-inline-24 m-label">Đơn giá xe-giờ thiếu</div><div class="value-box big num">200</div><div class="m-note">USD / xe-giờ thiếu · Giá trị giả định</div></div>
+          <div class="mini"><div class="reference-inline-24 m-label">Đơn giá xe-giờ dư</div><div class="value-box big num">50</div><div class="m-note">USD / xe-giờ dư · Giá trị giả định</div></div>
+        </div>
+        <p class="reference-inline-25 warn-text">Đơn giá là giả định phục vụ phân tích, không phải chi phí thực tế của SFFD.</p>
+        <div><button class="btn-disabled" type="button" disabled>Tính chi phí · Chưa khả dụng</button></div>
+      </section>
+      <section class="card">
+        <h2>Kết quả chi phí theo mô hình</h2>
+        <p class="sub">Cùng ngày dự báo, chân trời 24 giờ và kịch bản bố trí xe · Không xếp hạng khi chưa có kết quả</p>
+        <div class="tbl" role="table" aria-label="Kết quả chi phí theo mô hình">
+          <div class="trow head cost-grid" role="row"><div class="tcell" role="columnheader">Mô hình</div><div class="tcell" role="columnheader">Xe-giờ thiếu</div><div class="tcell" role="columnheader">Xe-giờ dư</div><div class="tcell" role="columnheader">Chi phí kịch bản</div></div>
+          <div class="trow cost-grid" role="row"><div class="tcell" data-label="Mô hình">SARIMAX</div><div class="tcell" data-label="Xe-giờ thiếu">—</div><div class="tcell" data-label="Xe-giờ dư">—</div><div class="tcell" data-label="Chi phí kịch bản">—</div></div>
+          <div class="trow cost-grid" role="row"><div class="tcell" data-label="Mô hình">Prophet</div><div class="tcell" data-label="Xe-giờ thiếu">—</div><div class="tcell" data-label="Xe-giờ dư">—</div><div class="tcell" data-label="Chi phí kịch bản">—</div></div>
+          <div class="trow cost-grid" role="row"><div class="tcell" data-label="Mô hình">LSTM</div><div class="tcell" data-label="Xe-giờ thiếu">—</div><div class="tcell" data-label="Xe-giờ dư">—</div><div class="tcell" data-label="Chi phí kịch bản">—</div></div>
+          <div class="trow cost-grid" role="row"><div class="tcell" data-label="Mô hình">Cùng giờ tuần trước</div><div class="tcell" data-label="Xe-giờ thiếu">—</div><div class="tcell" data-label="Xe-giờ dư">—</div><div class="tcell" data-label="Chi phí kịch bản">—</div></div>
+        </div>
+        <div class="reference-inline-26 mini">
+          <div class="reference-inline-27">Chưa có kết quả — chờ hoàn thiện phương pháp tính năng lực</div>
+          <p class="sub">Xe-giờ thiếu, xe-giờ dư và chi phí sẽ được điền sau khi có kết quả năng lực cho từng mô hình. Dấu — không có nghĩa là 0.</p>
+        </div>
+      </section>
+      <section class="card">
+        <h2>Cách đọc kịch bản</h2>
+        <p class="sub">Đơn vị đầu vào và đầu ra phải nhất quán</p>
+        <p class="reference-inline-28">Xe-giờ thiếu và xe-giờ dư: tổng chênh lệch số xe theo thời lượng từng khoảng, sau khi phương pháp năng lực được xác nhận. Không lấy trực tiếp sai số lượt điều động làm số xe thiếu hoặc dư.</p>
+        <p class="reference-inline-28">Chi phí kịch bản dự kiến = xe-giờ thiếu × đơn giá thiếu + xe-giờ dư × đơn giá dư. Đây là thước đo giả định cho phân tích, không phải báo cáo chi phí vận hành.</p>
+      </section>
+      <footer class="page-foot">EMSForecast · San Francisco · Số liệu minh họa · Thời gian theo dữ liệu nguồn</footer>
+    </div>
+
+    <!-- ================= MÀN: ĐÁNH GIÁ MÔ HÌNH ================= -->
+    <div class="page" id="screen-danhgia">
+      <div class="banner">
+        <div class="b-label">SỐ LIỆU MINH HỌA</div>
+        <div class="b-text">Chưa có kết quả đánh giá thật · Không xếp hạng trước khi thống nhất quy trình so sánh</div>
+      </div>
+      <div class="intro">
+        <h1>Đánh giá mô hình</h1>
+        <p>Đối chiếu dự báo lượt điều động trên cùng giai đoạn, chân trời và chính sách huấn luyện lại.</p>
+      </div>
+      <section class="card">
+        <h2>Thiết lập đánh giá</h2>
+        <p class="sub">Cấu hình minh họa · Cần xác nhận với phương pháp thực nghiệm</p>
+        <div class="tbl" role="table" aria-label="Thiết lập đánh giá">
+          <div class="trow head ev-grid" role="row"><div class="tcell" role="columnheader">Khoảng huấn luyện</div><div class="tcell" role="columnheader">Khoảng đánh giá</div><div class="tcell" role="columnheader">Số giờ</div><div class="tcell" role="columnheader">Chân trời dự báo</div></div>
+          <div class="trow ev-grid" role="row"><div class="tcell num" data-label="Khoảng huấn luyện">01/06–21/09/2026</div><div class="tcell num" data-label="Khoảng đánh giá">22–28/09/2026</div><div class="tcell num" data-label="Số giờ">168 giờ</div><div class="tcell" data-label="Chân trời dự báo">24 giờ / lần phát hành</div></div>
+        </div>
+        <p class="sub">Chính sách huấn luyện lại: chưa xác nhận. Cần thống nhất chính sách cho tất cả mô hình trước khi so sánh.</p>
+      </section>
+      <section class="reference-inline-29 kpis" aria-label="Chỉ số chính">
+        <div class="kpi"><div class="k-label">MAE · lượt/giờ</div><div class="k-value num accent">2,4</div><div class="k-note">Số liệu minh họa · Sai số tuyệt đối TB</div></div>
+        <div class="kpi"><div class="k-label">MAPE · %</div><div class="k-value num accent">29,0%</div><div class="k-note">Số liệu minh họa · Sai số % tuyệt đối TB</div></div>
+        <div class="kpi"><div class="k-label">Mô hình đang xem</div><div class="reference-inline-30 k-value accent">Prophet</div><div class="k-note">Chưa kết luận mô hình tốt nhất</div></div>
+      </section>
+      <section class="card">
+        <h2>Lượt điều động thực tế và dự báo</h2>
+        <p class="sub">Số liệu minh họa · Theo giờ (mặc định) · Ngày xem: 22/09/2026 trong tập đánh giá 168 giờ</p>
+        <p class="chart-legend"><span class="reference-inline-31 accent">Theo giờ · Đã chọn</span>       Tổng hợp theo ngày · Lựa chọn phụ       Mô hình đang xem: Prophet</p>
+        <p class="sub">Đơn vị: lượt/giờ · Xám đậm: thực tế minh họa · Nét đứt violet: dự báo minh họa</p>
+        <div class="chart-wrap"><svg class="chart" id="chart-danhgia" viewBox="0 0 1120 250" role="img" aria-label="Biểu đồ thực tế và dự báo ngày 22/09/2026, cả hai đường đạt đỉnh khoảng 21 lượt lúc 18 giờ"></svg></div>
+        <p class="chart-note">Khoảng bất định: chưa cung cấp trong phiên bản hiện tại.</p>
+      </section>
+      <div class="reference-inline-23 peak-wrap">
+        <section class="card">
+          <h2>Sai lệch theo giờ</h2>
+          <p class="sub">Đơn vị: lượt/giờ · Trích ngày 22/09 · Số liệu minh họa</p>
+          <p class="reference-inline-25">Sai lệch = Dự báo − Thực tế. Âm là dự báo thiếu, dương là dự báo thừa.</p>
+          <div class="chart-wrap"><svg class="chart" id="chart-sailech" viewBox="0 0 560 190" role="img" aria-label="Biểu đồ cột sai lệch theo giờ ngày 22/09: đa số dương nhẹ, âm sâu nhất khoảng trừ 4 lượt lúc 15 giờ"></svg></div>
+        </section>
+        <section class="card">
+          <h2>Hiệu quả theo khung giờ</h2>
+          <p class="sub">MAE · lượt/giờ · Số liệu minh họa, không dùng xếp hạng</p>
+          <div class="tbl" role="table" aria-label="Hiệu quả theo khung giờ">
+            <div class="trow head fr-grid" role="row"><div class="tcell" role="columnheader">Khung giờ</div><div class="tcell" role="columnheader">Prophet</div><div class="tcell" role="columnheader">Cùng giờ tuần trước</div></div>
+            <div class="trow fr-grid" role="row"><div class="tcell num" data-label="Khung giờ">00–06</div><div class="tcell num" data-label="Prophet">1,8</div><div class="tcell num" data-label="Cùng giờ tuần trước">2,8</div></div>
+            <div class="trow fr-grid" role="row"><div class="tcell num" data-label="Khung giờ">06–12</div><div class="tcell num" data-label="Prophet">2,3</div><div class="tcell num" data-label="Cùng giờ tuần trước">3,5</div></div>
+            <div class="trow fr-grid" role="row"><div class="tcell num" data-label="Khung giờ">12–18</div><div class="tcell num" data-label="Prophet">2,5</div><div class="tcell num" data-label="Cùng giờ tuần trước">3,6</div></div>
+            <div class="trow fr-grid" role="row"><div class="tcell num" data-label="Khung giờ">18–24</div><div class="tcell num" data-label="Prophet">3,0</div><div class="tcell num" data-label="Cùng giờ tuần trước">3,7</div></div>
+          </div>
+        </section>
+      </div>
+      <section class="card">
+        <h2>Bảng so sánh mô hình</h2>
+        <p class="sub">Chỉ hiển thị MAE và MAPE · Số liệu minh họa · Chưa xác nhận tính đồng nhất của quy trình</p>
+        <div class="tbl" role="table" aria-label="Bảng so sánh mô hình">
+          <div class="trow head fr-grid" role="row"><div class="tcell" role="columnheader">Mô hình</div><div class="tcell" role="columnheader">MAE (lượt/giờ)</div><div class="tcell" role="columnheader">MAPE (%)</div></div>
+          <div class="trow fr-grid" role="row"><div class="tcell" data-label="Mô hình">SARIMAX</div><div class="tcell num" data-label="MAE (lượt/giờ)">2,9</div><div class="tcell num" data-label="MAPE (%)">34,0%</div></div>
+          <div class="trow fr-grid" role="row"><div class="tcell" data-label="Mô hình">Prophet · Mô hình đang xem</div><div class="tcell num" data-label="MAE (lượt/giờ)">2,4</div><div class="tcell num" data-label="MAPE (%)">29,0%</div></div>
+          <div class="trow fr-grid" role="row"><div class="tcell" data-label="Mô hình">LSTM</div><div class="tcell num" data-label="MAE (lượt/giờ)">2,6</div><div class="tcell num" data-label="MAPE (%)">31,0%</div></div>
+          <div class="trow fr-grid" role="row"><div class="tcell" data-label="Mô hình">Cùng giờ tuần trước · Baseline</div><div class="tcell num" data-label="MAE (lượt/giờ)">3,4</div><div class="tcell num" data-label="MAPE (%)">38,0%</div></div>
+        </div>
+        <p class="sub">Chỉ số bổ sung của Prophet (minh họa): RMSE 3,2 lượt/giờ · WAPE 24,0%. Không đưa vào bảng so sánh chính.</p>
+      </section>
+      <section class="card">
+        <h2>Phương pháp và phạm vi</h2>
+        <p class="sub">Chưa thay thế báo cáo đánh giá thực nghiệm</p>
+        <p class="reference-inline-28">Phạm vi nghiên cứu: các xe có unit_type = MEDIC trong dữ liệu San Francisco.</p>
+        <p class="reference-inline-28">Baseline “Cùng giờ tuần trước”: dùng số lượt điều động của đúng giờ cách 7 ngày. Mỗi lần phát hành dự báo toàn bộ 24 giờ; không cập nhật thực tế trong ngày được dự báo.</p>
+        <p class="reference-inline-28">MAE: trung bình sai số tuyệt đối, đơn vị lượt/giờ. MAPE: trung bình sai số phần trăm tuyệt đối. Cần công bố cách xử lý giờ có thực tế bằng 0 trước khi báo cáo MAPE thật.</p>
+        <p class="reference-inline-28">RMSE nhấn mạnh sai lệch lớn; WAPE chuẩn hóa tổng sai số tuyệt đối theo tổng lượt thực tế. Mọi kết quả hiện tại là số liệu minh họa. Kết quả thật sẽ ghi “Đánh giá trên dữ liệu lịch sử”.</p>
+      </section>
+      <section class="card">
+        <h2>Giải thích mô hình đang xem</h2>
+        <p class="sub">Prophet · Không phải kết luận “tốt nhất”</p>
+        <p class="reference-inline-28">Prophet mô hình hóa xu hướng và tính mùa vụ để dự báo nhịp điều động. Các chu kỳ ngày và tuần là giả thuyết cần kiểm chứng trên dữ liệu lịch sử.</p>
+        <p class="reference-inline-28">Chỉ chọn mô hình sau khi đã đối chiếu MAE, MAPE và baseline trên cùng dữ liệu, chân trời 24 giờ và chính sách huấn luyện lại.</p>
+      </section>
+      <footer class="page-foot">EMSForecast · San Francisco · Số liệu minh họa · Thời gian theo dữ liệu nguồn</footer>
+    </div>
+
+    <!-- ================= MÀN: DỮ LIỆU LỊCH SỬ ================= -->
+    <div class="page" id="screen-lichsu">
+      <div class="banner">
+        <div class="b-label">SỐ LIỆU MINH HỌA</div>
+        <div class="b-text">Bản ghi mẫu, chưa tải dữ liệu thật từ SF OpenData</div>
+      </div>
+      <div class="intro">
+        <h1>Dữ liệu lịch sử</h1>
+        <p>Phân biệt cuộc gọi duy nhất với các lượt xe được điều động cho cùng một sự cố.</p>
+      </div>
+      <section class="kpis" aria-label="Chỉ số dữ liệu">
+        <div class="kpi"><div class="k-label">Số cuộc gọi duy nhất</div><div class="k-value num">5.480</div><div class="k-note">Đếm mã cuộc gọi khác nhau</div></div>
+        <div class="kpi"><div class="k-label">Tổng lượt điều động xe</div><div class="k-value num">6.720 lượt</div><div class="k-note">Đếm các lượt xe được điều động</div></div>
+        <div class="kpi"><div class="k-label">Bản ghi trùng thực sự</div><div class="k-value num">0</div><div class="k-note">Không đồng nhất với trùng mã cuộc gọi</div></div>
+        <div class="kpi"><div class="k-label">Đủ mốc thời gian cần thiết</div><div class="k-value num">99,6%</div><div class="k-note">Số liệu minh họa · Có cờ thiếu dữ liệu</div></div>
+      </section>
+      <div class="reference-inline-32 banner">
+        <div class="reference-inline-33 b-text">Một cuộc gọi có thể điều động nhiều xe. Các hàng cùng mã cuộc gọi nhưng khác xe không tự động là lỗi dữ liệu.</div>
+      </div>
+      <section class="card">
+        <h2>Lịch sử lượt điều động xe</h2>
+        <p class="sub">Số liệu minh họa · 01–28/09/2026 · Đơn vị: lượt/ngày · Tổng 6.720 lượt</p>
+        <div class="chart-wrap"><svg class="chart" id="chart-lichsu" viewBox="0 0 1120 250" role="img" aria-label="Biểu đồ lượt điều động theo ngày từ 01/09 đến 28/09/2026, dao động quanh 240 lượt mỗi ngày"></svg></div>
+        <p class="chart-note">Lượt điều động trung bình: 240 lượt/ngày. Số cuộc gọi duy nhất là chỉ số riêng, không dùng thay thế chuỗi điều động.</p>
+      </section>
+      <section class="card">
+        <h2>Bảng dữ liệu gốc · Lượt điều động</h2>
+        <p class="sub">Số liệu minh họa · Ngày 28/09/2026 · Thời gian theo dữ liệu nguồn</p>
+        <div class="toolbar">
+          <div class="grow"><input type="search" id="hist-search" placeholder="Tìm mã cuộc gọi / sự cố / xe" aria-label="Tìm mã cuộc gọi, sự cố hoặc xe"></div>
+          <span class="control num">Ngày: 01–28/09/2026 ▾</span>
+          <span class="control">Chất lượng: Tất cả ▾</span>
+          <button class="btn-ghost" type="button" id="btn-csv">Xuất CSV</button>
+        </div>
+        <div class="tbl" role="table" aria-label="Bảng dữ liệu gốc lượt điều động ngày 28/09/2026" id="hist-table">
+          <div class="trow head hist-grid" role="row"><div class="tcell" role="columnheader">Mã cuộc gọi</div><div class="tcell" role="columnheader">Mã sự cố</div><div class="tcell" role="columnheader">Mã xe</div><div class="tcell" role="columnheader">Thời điểm nhận</div><div class="tcell" role="columnheader">Điều động</div><div class="tcell" role="columnheader">Sẵn sàng</div><div class="tcell" role="columnheader">Thời gian bận</div><div class="tcell" role="columnheader">Cờ chất lượng</div></div>
+          <div class="trow hist-grid" role="row"><div class="tcell num" data-label="Mã cuộc gọi">C-005480</div><div class="tcell num" data-label="Mã sự cố">I-005520</div><div class="tcell" data-label="Mã xe">M12</div><div class="tcell num" data-label="Thời điểm nhận">28/09<span class="cell-sub">23:10</span></div><div class="tcell num" data-label="Điều động">28/09<span class="cell-sub">23:12</span></div><div class="tcell num" data-label="Sẵn sàng">28/09<span class="cell-sub">23:57</span></div><div class="tcell num" data-label="Thời gian bận">45 phút</div><div class="tcell flag-ok" data-label="Cờ chất lượng">Hợp lệ</div></div>
+          <div class="trow hist-grid" role="row"><div class="tcell num" data-label="Mã cuộc gọi">C-005480</div><div class="tcell num" data-label="Mã sự cố">I-005520</div><div class="tcell" data-label="Mã xe">M07</div><div class="tcell num" data-label="Thời điểm nhận">28/09<span class="cell-sub">23:10</span></div><div class="tcell num" data-label="Điều động">28/09<span class="cell-sub">23:13</span></div><div class="tcell num" data-label="Sẵn sàng">28/09<span class="cell-sub">23:58</span></div><div class="tcell num" data-label="Thời gian bận">45 phút</div><div class="tcell flag-ok" data-label="Cờ chất lượng">Hợp lệ</div></div>
+          <div class="trow hist-grid" role="row"><div class="tcell num" data-label="Mã cuộc gọi">C-005479</div><div class="tcell num" data-label="Mã sự cố">I-005519</div><div class="tcell" data-label="Mã xe">M04</div><div class="tcell num" data-label="Thời điểm nhận">28/09<span class="cell-sub">22:54</span></div><div class="tcell num" data-label="Điều động">28/09<span class="cell-sub">22:56</span></div><div class="tcell num" data-label="Sẵn sàng">28/09<span class="cell-sub">23:38</span></div><div class="tcell num" data-label="Thời gian bận">42 phút</div><div class="tcell flag-ok" data-label="Cờ chất lượng">Hợp lệ</div></div>
+          <div class="trow hist-grid" role="row"><div class="tcell num" data-label="Mã cuộc gọi">C-005478</div><div class="tcell num" data-label="Mã sự cố">I-005518</div><div class="tcell" data-label="Mã xe">M09</div><div class="tcell num" data-label="Thời điểm nhận">28/09<span class="cell-sub">22:40</span></div><div class="tcell num" data-label="Điều động">28/09<span class="cell-sub">22:42</span></div><div class="tcell num" data-label="Sẵn sàng">—</div><div class="tcell num" data-label="Thời gian bận">—</div><div class="tcell flag-bad" data-label="Cờ chất lượng">Thiếu mốc sẵn sàng</div></div>
+          <div class="trow hist-grid" role="row"><div class="tcell num" data-label="Mã cuộc gọi">C-005477</div><div class="tcell num" data-label="Mã sự cố">I-005517</div><div class="tcell" data-label="Mã xe">M03</div><div class="tcell num" data-label="Thời điểm nhận">28/09<span class="cell-sub">22:21</span></div><div class="tcell num" data-label="Điều động">28/09<span class="cell-sub">22:23</span></div><div class="tcell num" data-label="Sẵn sàng">28/09<span class="cell-sub">23:13</span></div><div class="tcell num" data-label="Thời gian bận">50 phút</div><div class="tcell flag-ok" data-label="Cờ chất lượng">Hợp lệ</div></div>
+        </div>
+        <p class="link-accent">Hai dòng đầu cùng mã cuộc gọi nhưng khác xe: hai lượt điều động hợp lệ. Hiển thị 5/6.720 lượt mẫu.</p>
+        <p class="sub">Thời gian bận minh họa = thời điểm sẵn sàng − thời điểm điều động. Thiếu mốc thời gian → chưa tính, không thay bằng 0.</p>
+      </section>
+      <section class="card">
+        <h2>Nguồn và phạm vi thời gian</h2>
+        <p class="sub">SF OpenData · Dataset nuek-vuh3</p>
+        <div class="tbl" role="table" aria-label="Nguồn và phạm vi thời gian">
+          <div class="trow head src-grid" role="row"><div class="tcell" role="columnheader">Thông tin</div><div class="tcell" role="columnheader">Trạng thái</div></div>
+          <div class="trow src-grid" role="row"><div class="tcell" data-label="Thông tin">Nguồn dữ liệu đích</div><div class="tcell" data-label="Trạng thái">SF OpenData · Dataset nuek-vuh3</div></div>
+          <div class="trow src-grid" role="row"><div class="tcell" data-label="Thông tin">Ngày tải</div><div class="tcell" data-label="Trạng thái">Chưa ghi nhận — chưa kết nối dữ liệu thật</div></div>
+          <div class="trow src-grid" role="row"><div class="tcell" data-label="Thông tin">Giai đoạn dữ liệu nguồn</div><div class="tcell" data-label="Trạng thái">Chưa xác nhận từ dữ liệu tải</div></div>
+          <div class="trow src-grid" role="row"><div class="tcell" data-label="Thông tin">Giai đoạn đang minh họa</div><div class="tcell num" data-label="Trạng thái">01–28/09/2026 · Không phải kỳ dữ liệu thật</div></div>
+        </div>
+        <p class="reference-inline-28">Bản ghi trùng thực sự phải được xác định theo khóa định danh lượt điều động và quy tắc kiểm tra đã thống nhất; không chỉ dựa vào mã cuộc gọi.</p>
+      </section>
+      <footer class="page-foot">EMSForecast · San Francisco · Số liệu minh họa · Thời gian theo dữ liệu nguồn</footer>
+    </div>
+
+    <!-- ================= MÀN: CÀI ĐẶT ================= -->
+    <div class="page" id="screen-caidat">
+      <div class="intro">
+        <h1>Cài đặt</h1>
+        <p>Tùy chỉnh giao diện và xem thông tin dữ liệu.</p>
+        <p class="sub" id="set-status">Không có thay đổi</p>
+      </div>
+      <div class="set-grid">
+        <section class="card">
+          <div class="set-head">HIỂN THỊ</div>
+          <p class="sub">Tùy chọn trình bày của bản mô phỏng.</p>
+          <div>
+            <div class="set-row"><div><div class="sr-label">Ngôn ngữ</div><div class="sr-sub">Ngôn ngữ hiển thị</div></div><div class="value-box"><span>Tiếng Việt</span></div></div>
+            <div class="set-row"><div><div class="sr-label">Giao diện</div><div class="sr-sub">Màu sắc ứng dụng</div></div><div class="opt-group" role="group" aria-label="Chế độ giao diện"><button class="opt sel" type="button">Sáng</button><button class="opt unsupported" type="button" disabled>Tối · Chưa hỗ trợ</button></div></div>
+            <div class="set-row"><div><div class="sr-label">Mật độ bảng</div><div class="sr-sub">Khoảng cách giữa các hàng</div></div><div class="opt-group" role="group" aria-label="Mật độ bảng" id="density-group"><button class="opt sel" type="button" data-density="comfy">Thoải mái</button><button class="opt" type="button" data-density="compact">Gọn</button></div></div>
+            <div class="set-row"><div><div class="sr-label">Định dạng ngày</div></div><div class="value-box"><span class="num">DD/MM/YYYY</span></div></div>
+            <div class="set-row"><div><div class="sr-label">Định dạng giờ</div></div><div class="value-box"><span>24 giờ</span></div></div>
+            <div class="set-row"><div><div class="sr-label">Giảm chuyển động</div><div class="sr-sub">Hạn chế hiệu ứng chuyển cảnh</div></div><div class="reference-inline-34"><button class="switch" type="button" role="switch" aria-checked="false" id="motion-switch" aria-label="Giảm chuyển động"></button><span id="motion-state" class="reference-inline-35">Tắt</span></div></div>
+          </div>
+          <div class="reference-inline-36 mini">
+            <div class="reference-inline-37">Xem trước</div>
+            <p class="sub">Ví dụ minh họa · Không phải thông tin nhập dữ liệu</p>
+            <div class="tbl" id="preview-table" role="table" aria-label="Bảng xem trước">
+              <div class="trow head fr-grid" role="row"><div class="tcell" role="columnheader">Xe</div><div class="tcell" role="columnheader">Ngày</div><div class="tcell" role="columnheader">Giờ</div></div>
+              <div class="trow fr-grid" role="row"><div class="tcell" data-label="Xe">M12</div><div class="tcell num" data-label="Ngày">28/09/2026</div><div class="tcell num" data-label="Giờ">23:12</div></div>
+              <div class="trow fr-grid" role="row"><div class="tcell" data-label="Xe">M07</div><div class="tcell num" data-label="Ngày">28/09/2026</div><div class="tcell num" data-label="Giờ">23:13</div></div>
+              <div class="trow fr-grid" role="row"><div class="tcell" data-label="Xe">M04</div><div class="tcell num" data-label="Ngày">28/09/2026</div><div class="tcell num" data-label="Giờ">22:56</div></div>
+            </div>
+            <p class="sub">Ngày: DD/MM/YYYY · Giờ: 24 giờ</p>
+          </div>
+        </section>
+        <section class="card">
+          <div class="set-head">THÔNG TIN DỮ LIỆU</div>
+          <p class="sub">Chỉ đọc · Không chỉnh sửa tại đây</p>
+          <div class="reference-inline-38">
+            <div class="info-item"><span class="i-label">Nguồn</span><span class="i-value">SF OpenData</span></div>
+            <div class="info-item"><span class="i-label">Dataset</span><span class="i-value num">nuek-vuh3</span></div>
+            <div class="info-item"><span class="i-label">Phạm vi</span><span class="i-value">San Francisco</span></div>
+            <div class="info-item"><span class="i-label">Loại xe nghiên cứu</span><span class="i-value">unit_type = MEDIC</span></div>
+            <div class="info-item"><span class="i-label">Phiên bản bộ dữ liệu</span><span class="i-value">Chưa cập nhật</span></div>
+            <div class="info-item"><span class="i-label">Giai đoạn dữ liệu</span><span class="i-value">Chưa cập nhật</span></div>
+            <div class="info-item"><span class="i-label">Ngày nhập gần nhất</span><span class="i-value">Chưa cập nhật</span></div>
+            <div class="info-item"><span class="i-label">Quy ước thời gian</span><span class="i-value">Theo dữ liệu nguồn; chưa chuyển đổi múi giờ</span></div>
+          </div>
+          <div class="mini"><p class="reference-inline-39 sub">Nguồn công bố cập nhật hằng ngày. Bản demo chỉ thay đổi khi nhập bộ dữ liệu mới.</p></div>
+          <button class="btn-ghost" type="button" id="btn-goto-history">Xem dữ liệu lịch sử</button>
+        </section>
+      </div>
+      <section class="card actions-bar">
+        <p class="reference-inline-25">Các thay đổi chỉ áp dụng trong bản mô phỏng.</p>
+        <span class="spacer"></span>
+        <button class="btn-ghost" type="button" id="btn-set-cancel">Hủy</button>
+        <button class="btn-primary" type="button" id="btn-set-save">Lưu thay đổi</button>
+      </section>
+      <footer class="page-foot">EMSForecast · San Francisco · Thời gian theo dữ liệu nguồn</footer>
+    </div>
+  </main>
+  </div>
+</div>
+
+<script type="module" src="/app.mjs"></script>
+</body>
+</html>

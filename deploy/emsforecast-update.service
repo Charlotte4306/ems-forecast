@@ -1,0 +1,24 @@
+[Unit]
+Description=Refresh EMSForecast public data and seven-day forecasts
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=2h
+StartLimitBurst=2
+
+[Service]
+Type=oneshot
+User=charlotte
+WorkingDirectory=/home/charlotte/apps/emsforecast-current
+ExecStart=/home/charlotte/apps/emsforecast-live-venv/bin/python -m ems.live.update --output-dir /home/charlotte/apps/emsforecast-live
+Environment=PYTHONUNBUFFERED=1
+Environment=OMP_NUM_THREADS=2
+Environment=OPENBLAS_NUM_THREADS=2
+TimeoutStartSec=20min
+MemoryMax=1500M
+Restart=on-failure
+RestartSec=30min
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+UMask=0027
+

@@ -1,0 +1,386 @@
+
+  /* ===== Bố cục, nội dung và cỡ chữ lấy đúng từ file Figma EMSForecast — màn Tổng quan vận hành (frame 1440×2054).
+     Màu, nền pastel loang, kính mờ và hiệu ứng chuyển động: theo bản HTML trước (bản pastel kính mờ), theo yêu cầu của Charlotte. =====
+     Font: IBM Plex Sans — Tiêu đề trang 600·28/36 · Tiêu đề khu vực 600·18/26 · Số liệu nổi bật 600·30/38
+     Nội dung 400·15/24 · Điều khiển & bảng 400/500·14/20 · Ghi chú 400·13/18 · Nhãn biểu đồ 400·12/18
+     Màu: chữ chính #202027 · chữ phụ #666575 · nhấn #754BFF · viền #E7E3EF · viền sáng #F3F0FA
+     pastel: lavender #DDD5FA · xanh #D9EAFB · hồng #F6DEEC · nền ứng dụng #FAFAFD */
+  :root{
+    color-scheme: light;
+    --bg-app:#FAFAFD;
+    --ink:#202027;
+    --ink-2:#666575;
+    --accent:#754BFF;
+    --accent-soft:#EEE8FF;
+    --border:#E7E3EF;
+    --border-light:#F3F0FA;
+    --panel:rgba(255,255,255,.68);
+    --panel-solid:#FFFFFF;
+    --glass-border:rgba(238,196,222,.55);
+    --success:#18765D;
+    --warn:#B86A08;
+    --chart-actual:#334155;
+    --heat-0:#E4D9FB; --heat-1:#CDB2F2; --heat-2:#9E78E8; --heat-3:#C26A06;
+    --shadow-card:0 6px 22px rgba(117,75,255,.10), 0 3px 8px rgba(240,150,200,.10);
+    --shadow-panel:0 8px 28px rgba(117,75,255,.12), 0 3px 10px rgba(240,150,200,.10);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg-app); color:var(--ink);
+    font-family:"IBM Plex Sans",-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased;
+    overflow-x:clip;
+  }
+  .num{font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1}
+  button{font:inherit; cursor:pointer; color:inherit}
+  p{margin:0}
+
+  /* ================= Lớp nền pastel loang (đúng 3 ellipse của Figma) + chuyển động ================= */
+  .bg-scene{position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;
+    background:linear-gradient(160deg,#FBF3FA 0%, #F1F5FE 42%, #FDF8F1 78%, #FAFAFD 100%)}
+  .blob{position:absolute; border-radius:50%; filter:blur(55px) saturate(1.25); will-change:transform}
+  .blob.b1{width:1040px;height:1320px; left:-260px; top:50px; background:radial-gradient(circle at 50% 50%, #C9B6F8, rgba(201,182,248,0) 70%); animation:blobDrift1 26s ease-in-out infinite alternate}
+  .blob.b2{width:930px;height:1190px; left:350px; top:210px; background:radial-gradient(circle at 50% 50%, #BCDCF8, rgba(188,220,248,0) 70%); animation:blobDrift2 32s ease-in-out infinite alternate}
+  .blob.b3{width:920px;height:1220px; right:-260px; top:20px; background:radial-gradient(circle at 50% 50%, #F4C3DE, rgba(244,195,222,0) 70%); animation:blobDrift1 30s ease-in-out infinite alternate-reverse}
+  .blob.b4{width:760px;height:760px; left:16%; bottom:-340px; background:radial-gradient(circle at 50% 50%, #BDEBD6, rgba(189,235,214,0) 70%); animation:blobDrift2 38s ease-in-out infinite alternate-reverse}
+  .blob.b5{width:680px;height:680px; right:12%; bottom:-260px; background:radial-gradient(circle at 50% 50%, #FBDDBE, rgba(251,221,190,0) 70%); animation:blobDrift1 34s ease-in-out infinite alternate}
+  @keyframes blobDrift1{from{transform:translate(0,0) scale(1)} to{transform:translate(90px,60px) scale(1.1)}}
+  @keyframes blobDrift2{from{transform:translate(0,0) scale(1.06)} to{transform:translate(-80px,84px) scale(.94)}}
+  .heart{position:absolute; fill:#F2A9CE; opacity:.55; animation:heartFloat 11s ease-in-out infinite}
+  @keyframes heartFloat{0%,100%{transform:translateY(0) rotate(-5deg); opacity:.3} 50%{transform:translateY(-26px) rotate(6deg); opacity:.75}}
+  .dot{position:absolute; border-radius:50%; background:#fff; box-shadow:0 0 6px rgba(255,255,255,.9); animation:twinkle 4.5s ease-in-out infinite}
+  .dot.lav{background:#C9B8F5}.dot.pink{background:#F2B8D4}.dot.blue{background:#A9CCF2}
+  @keyframes twinkle{0%,100%{opacity:.25; transform:translateY(0)} 50%{opacity:.95; transform:translateY(-9px)}}
+  .cloud{position:absolute; background:rgba(255,255,255,.7); border-radius:99px; filter:blur(2px); animation:cloudDrift 52s linear infinite}
+  .cloud::before,.cloud::after{content:""; position:absolute; background:inherit; border-radius:50%}
+  .cloud::before{width:55%; height:190%; left:14%; top:-95%}
+  .cloud::after{width:38%; height:130%; right:14%; top:-55%}
+  @keyframes cloudDrift{from{transform:translateX(-14vw)} to{transform:translateX(106vw)}}
+  .bg-waves{position:absolute; left:0; right:0; bottom:-6px; width:100%; height:170px}
+  .bg-waves .w1{animation:waveSlide 16s linear infinite}
+  .bg-waves .w2{animation:waveSlide 26s linear infinite reverse}
+  @keyframes waveSlide{from{transform:translateX(0)} to{transform:translateX(-120px)}}
+
+  /* ================= Khung bố cục: sidebar 224 + workspace 1216 (Figma) ================= */
+  .layout{display:grid; grid-template-columns:224px minmax(0,1fr); min-height:100vh; position:relative; z-index:1}
+  .workspace{max-width:1216px; width:100%; min-width:0}
+
+  /* ---------- Sidebar: trắng 90% + blur 8, viền #E7E3EF, padding 28/16, gap 30 ---------- */
+  .sidebar{
+    background:linear-gradient(180deg, rgba(255,255,255,.74), rgba(255,255,255,.6));
+    -webkit-backdrop-filter:blur(20px) saturate(1.5); backdrop-filter:blur(20px) saturate(1.5);
+    border-right:1px solid var(--glass-border);
+    padding:28px 16px; display:flex; flex-direction:column; gap:30px;
+    position:sticky; top:0; height:100vh;
+    animation:riseIn .7s ease both;
+  }
+  .brand{display:flex; align-items:center; gap:9px}
+  .brand .mark{width:29px; height:29px; flex:none; border-radius:7px; background:var(--accent); display:flex; align-items:center; justify-content:center}
+  .brand .mark svg{width:20px; height:20px; stroke:#fff; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
+  .brand .name{font-size:18px; line-height:26px; font-weight:600; white-space:nowrap}
+  .nav{display:flex; flex-direction:column; gap:6px}
+  .nav .nav-label{font-size:12px; line-height:18px; color:var(--ink-2)}
+  .nav button{
+    display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+    background:none; border:0; border-radius:7px; padding:12px;
+    font-size:14px; line-height:20px; font-weight:400; color:var(--ink);
+    transition:background .25s ease, transform .25s ease;
+  }
+  .nav button svg{width:16px; height:16px; flex:none; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round}
+  .nav button:hover{background:var(--accent-soft); transform:translateX(3px)}
+  .nav button.active{background:var(--accent-soft); color:var(--accent); font-weight:500}
+  .nav button .ind{margin-left:auto; width:3px; height:14px; border-radius:2px; background:var(--accent); flex:none}
+  .side-context{
+    background:rgba(255,255,255,.6);
+    -webkit-backdrop-filter:blur(20px) saturate(1.5); backdrop-filter:blur(20px) saturate(1.5);
+    border:1px solid var(--glass-border); border-radius:20px;
+    padding:12px; display:flex; flex-direction:column; gap:9px;
+    font-size:12px; line-height:18px; color:var(--ink-2);
+  }
+  .side-context .ctx-head{color:var(--accent)}
+  .side-footer{display:flex; flex-direction:column; gap:6px; font-size:12px; line-height:18px; color:var(--ink-2)}
+
+  /* ---------- Topbar: cao 80, trắng 92% + blur 8, viền dưới #E7E3EF ---------- */
+  .topbar{
+    height:80px; padding:0 28px; display:flex; align-items:center; justify-content:space-between; gap:16px;
+    background:rgba(255,255,255,.72);
+    -webkit-backdrop-filter:blur(20px) saturate(1.5); backdrop-filter:blur(20px) saturate(1.5);
+    border-bottom:1px solid var(--glass-border);
+    position:sticky; top:0; z-index:5;
+  }
+  .topbar .crumb{font-size:14px; line-height:20px; font-weight:500; white-space:nowrap}
+  .filters{display:flex; align-items:center; gap:10px}
+  .control{
+    display:flex; align-items:center; gap:9px; background:rgba(255,255,255,.75);
+    -webkit-backdrop-filter:blur(14px) saturate(1.4); backdrop-filter:blur(14px) saturate(1.4);
+    border:1px solid var(--glass-border); border-radius:5px; padding:9px 12px;
+    font-size:14px; line-height:20px; font-weight:500; white-space:nowrap;
+  }
+  .control svg{width:14px; height:14px; stroke:var(--ink-2); fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
+  .freshness{display:flex; align-items:center; gap:5px; font-size:12px; line-height:18px; color:var(--ink-2); white-space:nowrap; margin-left:10px}
+  .freshness .dot-s{width:6px; height:6px; border-radius:2px; background:var(--success); flex:none; animation:dotPulse 2.2s ease-out infinite}
+  @keyframes dotPulse{0%{box-shadow:0 0 0 0 rgba(24,118,93,.45)} 70%{box-shadow:0 0 0 7px rgba(24,118,93,0)} 100%{box-shadow:0 0 0 0 rgba(24,118,93,0)}}
+  .profile{display:flex; align-items:center; gap:7px; margin-left:10px}
+  .avatar{width:30px; height:30px; border-radius:50%; background:var(--accent-soft); color:var(--accent);
+    display:flex; align-items:center; justify-content:center; font-size:12px; line-height:18px}
+  .profile svg{width:12px; height:12px; stroke:var(--ink-2); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
+
+  /* ---------- Nội dung trang: padding 28, các khối cách nhau 20 ---------- */
+  .page{padding:28px; display:flex; flex-direction:column; gap:20px; align-items:flex-start}
+  .page > *{width:100%; animation:riseIn .8s cubic-bezier(.22,.8,.32,1) both}
+  .page > *:nth-child(2){animation-delay:.05s}
+  .page > *:nth-child(3){animation-delay:.1s}
+  .page > *:nth-child(4){animation-delay:.15s}
+  .page > *:nth-child(5){animation-delay:.2s}
+  .page > *:nth-child(6){animation-delay:.25s}
+  .page > *:nth-child(7){animation-delay:.3s}
+  .page > *:nth-child(8){animation-delay:.35s}
+  @keyframes riseIn{from{opacity:0; transform:translateY(16px)} to{opacity:1; transform:translateY(0)}}
+
+  /* Banner trạng thái dữ liệu: nền #EEE8FF, padding 12, rộng 1144 */
+  .banner{background:linear-gradient(90deg, rgba(221,208,255,.75), rgba(246,214,236,.7));
+    -webkit-backdrop-filter:blur(16px) saturate(1.4); backdrop-filter:blur(16px) saturate(1.4);
+    border:1px solid var(--glass-border); border-radius:12px;
+    padding:12px; display:flex; gap:12px; align-items:flex-start; max-width:1144px}
+  .banner .b-label{flex:0 0 180px; font-size:12px; line-height:18px; color:var(--accent)}
+  .banner .b-text{font-size:13px; line-height:18px; color:var(--ink-2)}
+
+  /* Giới thiệu */
+  .intro{display:flex; flex-direction:column; gap:12px}
+  .intro h1{margin:0; font-size:28px; line-height:36px; font-weight:600}
+  .intro p{font-size:15px; line-height:24px; color:var(--ink-2)}
+
+  /* Card dùng chung: trắng, viền #F3F0FA, bo 12, padding 20, bóng Figma */
+  .card{
+    background:linear-gradient(160deg, rgba(255,255,255,.82), rgba(255,255,255,.62));
+    -webkit-backdrop-filter:blur(20px) saturate(1.5); backdrop-filter:blur(20px) saturate(1.5);
+    border:1px solid var(--glass-border); border-radius:20px; box-shadow:var(--shadow-card);
+    padding:20px; display:flex; flex-direction:column; gap:12px;
+    transition:transform .35s ease, box-shadow .35s ease;
+  }
+  .card:hover{transform:translateY(-4px); box-shadow:0 16px 36px rgba(117,75,255,.16), 0 6px 16px rgba(240,150,200,.14)}
+  .card h2{margin:0; font-size:18px; line-height:26px; font-weight:600}
+  .card .sub{font-size:13px; line-height:18px; color:var(--ink-2)}
+
+  /* ---------- 4 thẻ KPI: bo 14, padding 18, gap 10/16 ---------- */
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:16px}
+  .kpi{
+    background:linear-gradient(160deg, rgba(255,255,255,.82), rgba(255,255,255,.6));
+    -webkit-backdrop-filter:blur(20px) saturate(1.5); backdrop-filter:blur(20px) saturate(1.5);
+    border:1px solid var(--glass-border); border-radius:20px; box-shadow:var(--shadow-card);
+    padding:18px; display:flex; flex-direction:column; gap:10px;
+    transition:transform .35s ease, box-shadow .35s ease;
+  }
+  .kpi:hover{transform:translateY(-4px); box-shadow:0 16px 36px rgba(117,75,255,.16), 0 6px 16px rgba(240,150,200,.14)}
+  .kpi .k-label{font-size:13px; line-height:18px; color:var(--ink-2)}
+  .kpi .k-value{font-size:30px; line-height:38px; font-weight:600}
+  .kpi .k-note{font-size:12px; line-height:18px; color:var(--ink-2)}
+
+  /* ---------- Biểu đồ xu hướng ---------- */
+  .chart-legend{font-size:13px; line-height:18px; color:var(--ink-2); white-space:pre-wrap}
+  .chart-wrap{width:100%}
+  svg.chart{width:100%; height:auto; display:block}
+  .chart text{font-family:inherit}
+  .draw-line{stroke-dasharray:1; stroke-dashoffset:1; animation:drawLine 2.2s ease forwards .3s}
+  @keyframes drawLine{to{stroke-dashoffset:0}}
+  .chart-note{font-size:13px; line-height:18px; color:var(--ink-2)}
+
+  /* ---------- Heatmap: ô 38×26 bo 3, gap 4, hàng cách 12 ---------- */
+  .heatmap{display:grid; grid-template-columns:104px repeat(24,minmax(0,1fr)); column-gap:4px; row-gap:12px; align-items:center}
+  .hm-corner,.hm-h{font-size:12px; line-height:18px; color:var(--ink-2)}
+  .hm-h{text-align:left}
+  .hm-d{font-size:13px; line-height:18px; color:var(--ink-2); white-space:nowrap}
+  .hm-cell{height:26px; border-radius:3px; transition:transform .2s ease, box-shadow .2s ease; animation:cellIn .5s ease both}
+  @keyframes cellIn{from{opacity:0; transform:scale(.6)} to{opacity:1; transform:scale(1)}}
+  .hm-cell:hover,.hm-cell:focus-visible{transform:scale(1.18); box-shadow:0 4px 12px rgba(48,35,78,.25); position:relative; z-index:2; outline:none}
+  .hm-note{font-size:12px; line-height:18px; color:var(--ink-2)}
+
+  /* ---------- Bảng trong card (Figma): header nền #F3F0FA, hàng trắng, các hàng cách 12 ---------- */
+  .tbl{display:flex; flex-direction:column; gap:12px}
+  .tbl .trow{display:grid; gap:0; padding:12px 0; background:rgba(255,255,255,.55); border-radius:8px}
+  .tbl .trow.head{background:linear-gradient(90deg, rgba(233,224,253,.85), rgba(250,226,240,.85))}
+  .tbl .tcell{padding:0 8px; font-size:14px; line-height:20px}
+  .tbl .head .tcell{font-weight:500; color:var(--ink-2)}
+  .tbl .head .tcell:first-child{color:var(--ink)}
+  .peak-grid{grid-template-columns:220px 200px 200px}
+  .def-grid{grid-template-columns:240px 600px 280px}
+
+  /* Khối cao điểm: card 660 + panel lưu ý 480 */
+  .peak-wrap{display:grid; grid-template-columns:660px minmax(0,1fr); gap:20px; align-items:start}
+  .note-panel{
+    background:linear-gradient(160deg, rgba(255,244,250,.8), rgba(255,255,255,.6));
+    -webkit-backdrop-filter:blur(20px) saturate(1.5); backdrop-filter:blur(20px) saturate(1.5);
+    border:1px solid var(--glass-border); border-radius:20px; box-shadow:var(--shadow-panel);
+    padding:20px; display:flex; flex-direction:column; gap:12px;
+    transition:transform .35s ease, box-shadow .35s ease;
+  }
+  .note-panel:hover{transform:translateY(-4px); box-shadow:0 16px 36px rgba(117,75,255,.16), 0 6px 16px rgba(240,150,200,.14)}
+  .note-panel h2{margin:0; font-size:18px; line-height:26px; font-weight:600}
+  .note-panel p{font-size:15px; line-height:24px}
+
+  footer.page-foot{font-size:12px; line-height:18px; color:var(--ink-2)}
+
+  /* ================= Các màn còn lại (cùng hệ Figma) ================= */
+  .page{display:none}
+  .page.active{display:flex}
+  .banner.warn{background:linear-gradient(90deg, rgba(252,232,196,.8), rgba(253,240,214,.7))}
+  .banner.warn .b-label{color:var(--warn)}
+  .banner.stack{flex-direction:column; gap:4px}
+  .banner.stack .b-label{flex:none; font-size:14px; line-height:20px; font-weight:500}
+  .banner.green{background:linear-gradient(90deg, rgba(206,240,222,.8), rgba(230,248,238,.7))}
+  .banner.green .b-label{color:var(--success)}
+  .banner .b-title{font-size:14px; line-height:20px; font-weight:500; color:var(--ink)}
+  .link-accent{color:var(--accent); font-size:13px; line-height:18px}
+  .accent{color:var(--accent)}
+  .warn-text{color:var(--warn)}
+
+  .seg-row{display:flex; gap:10px; flex-wrap:wrap}
+  .seg{border:1px solid var(--glass-border); background:rgba(255,255,255,.6); border-radius:8px; padding:10px 16px; font-size:14px; line-height:20px; font-weight:500}
+  .seg.sel{background:var(--accent-soft); color:var(--accent); border-color:rgba(117,75,255,.35)}
+  .seg.dim{color:var(--ink-2); font-weight:400}
+  .field-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px 20px}
+  .field .f-label{font-size:13px; line-height:18px; color:var(--ink-2); margin-bottom:6px}
+  .value-box{background:rgba(255,255,255,.75); border:1px solid var(--glass-border); border-radius:8px; padding:10px 14px; font-size:14px; line-height:20px; font-weight:500; display:flex; justify-content:space-between; align-items:center}
+  .value-box.big{font-size:30px; line-height:38px; font-weight:600; padding:12px 16px}
+  .btn-primary{background:var(--accent); color:#fff; border:0; border-radius:8px; padding:12px 22px; font-size:14px; line-height:20px; font-weight:500; box-shadow:0 8px 20px rgba(117,75,255,.3); transition:transform .25s ease, box-shadow .25s ease}
+  .btn-primary:hover{transform:translateY(-2px); box-shadow:0 12px 26px rgba(117,75,255,.38)}
+  .btn-disabled{background:rgba(238,232,255,.7); color:var(--ink-2); border:1px solid var(--glass-border); border-radius:8px; padding:12px 22px; font-size:14px; line-height:20px; font-weight:500; cursor:not-allowed}
+  .btn-ghost{background:rgba(255,255,255,.7); border:1px solid var(--glass-border); border-radius:8px; padding:10px 18px; font-size:14px; line-height:20px; font-weight:500}
+  .mini-grid{display:grid; gap:16px}
+  .mini-grid.c3{grid-template-columns:repeat(3,1fr)}
+  .mini-grid.c4{grid-template-columns:repeat(4,1fr)}
+  .mini{background:rgba(255,255,255,.5); border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:8px}
+  .mini .m-label{font-size:13px; line-height:18px; color:var(--ink-2)}
+  .mini .m-value{font-size:18px; line-height:26px; font-weight:600}
+  .mini .m-value.big{font-size:30px; line-height:38px; color:var(--accent)}
+  .mini .m-note{font-size:12px; line-height:18px; color:var(--ink-2)}
+  .status-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:16px}
+  .status-cell{border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:6px}
+  .status-cell .s-title{font-size:14px; line-height:20px; font-weight:500}
+  .status-cell .s-note{font-size:13px; line-height:18px; color:var(--ink-2)}
+  .status-cell.blue{background:rgba(221,232,253,.65)} .status-cell.blue .s-title{color:#3B5BDB}
+  .status-cell.lav{background:rgba(238,232,255,.7)} .status-cell.lav .s-title{color:var(--accent)}
+  .status-cell.rose{background:rgba(253,226,233,.7)} .status-cell.rose .s-title{color:#C2255C}
+  .status-cell.green{background:rgba(211,245,227,.7)} .status-cell.green .s-title{color:var(--success)}
+  .fc-grid{grid-template-columns:1.2fr 1fr 1fr .8fr}
+  .ev-grid{grid-template-columns:repeat(4,1fr)}
+  .fr-grid{grid-template-columns:1fr 1fr 1fr}
+  .plan-grid{grid-template-columns:1fr 1fr 1fr 1fr .7fr}
+  .cost-grid{grid-template-columns:1.2fr 1fr 1fr 1fr}
+  .src-grid{grid-template-columns:1fr 2fr}
+  .hist-grid{grid-template-columns:1fr 1fr .55fr 1fr 1fr 1fr .8fr 1.15fr}
+  .hist-grid .tcell{font-size:13px}
+  .cell-sub{display:block; color:var(--ink-2)}
+  .flag-ok{color:var(--ink)} .flag-bad{color:var(--warn); font-weight:500}
+  .toolbar{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+  .toolbar .grow{flex:1 1 220px}
+  .toolbar input{width:100%; font:inherit; font-size:14px; padding:10px 14px; border-radius:8px; border:1px solid var(--glass-border); background:rgba(255,255,255,.75); color:var(--ink)}
+  .set-grid{display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start}
+  .set-head{font-size:15px; line-height:24px; font-weight:600; letter-spacing:.04em}
+  .set-row{display:grid; grid-template-columns:200px 1fr; gap:20px; align-items:center; padding:10px 0}
+  .set-row .sr-label{font-size:14px; line-height:20px; font-weight:500}
+  .set-row .sr-sub{font-size:12px; line-height:18px; color:var(--ink-2)}
+  .opt-group{display:flex; gap:10px}
+  .opt{flex:1; text-align:center; border:1px solid var(--glass-border); background:rgba(255,255,255,.6); border-radius:8px; padding:11px 8px; font-size:14px; line-height:20px; font-weight:500}
+  .opt.sel{background:var(--accent-soft); color:var(--accent); border-color:rgba(117,75,255,.35)}
+  .opt.unsupported{color:var(--ink-2); background:rgba(250,250,253,.6)}
+  .switch{width:52px; height:30px; border-radius:99px; background:#E4DEF5; border:0; position:relative; flex:none; transition:background .25s ease}
+  .switch::after{content:""; position:absolute; width:24px; height:24px; border-radius:50%; background:#fff; top:3px; left:3px; box-shadow:0 2px 6px rgba(48,35,78,.25); transition:left .25s ease}
+  .switch[aria-checked="true"]{background:var(--accent)}
+  .switch[aria-checked="true"]::after{left:25px}
+  .info-item{background:rgba(255,255,255,.55); border:1px solid var(--glass-border); border-radius:10px; padding:12px 14px; display:flex; flex-direction:column; gap:4px}
+  .info-item .i-label{font-size:12px; line-height:18px; color:var(--ink-2)}
+  .info-item .i-value{font-size:14px; line-height:20px; font-weight:500}
+  .actions-bar{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+  .actions-bar .spacer{flex:1}
+  body.reduce-motion *{animation:none !important; transition:none !important}
+
+  /* ---------- Responsive (Figma chỉ có bản desktop 1440; dưới đây là co giãn để không tràn ngang) ---------- */
+  @media (max-width:1240px){
+    .peak-wrap{grid-template-columns:1fr}
+    .def-grid{grid-template-columns:200px 1fr 200px}
+  }
+  @media (max-width:1020px){
+    .mini-grid.c3,.mini-grid.c4,.status-grid{grid-template-columns:repeat(2,1fr)}
+    .set-grid{grid-template-columns:1fr}
+    .field-grid{grid-template-columns:1fr}
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .peak-grid{grid-template-columns:1.1fr 1fr 1fr}
+  }
+  @media (max-width:820px){
+    .layout{grid-template-columns:1fr}
+    .sidebar{position:static; height:auto; border-right:0; border-bottom:1px solid var(--border); padding:16px; gap:16px}
+    .nav{flex-direction:row; flex-wrap:wrap; align-items:center}
+    .nav .nav-label{width:100%}
+    .nav button{width:auto; padding:9px 12px}
+    .nav button:hover{transform:none}
+    .nav button .ind{display:none}
+    .side-context,.side-footer{display:none}
+    .topbar{height:auto; min-height:64px; padding:10px 16px; flex-wrap:wrap}
+    .filters{flex-wrap:wrap}
+    .freshness,.profile{margin-left:0}
+    .page{padding:16px}
+    .banner{flex-direction:column; gap:4px}
+    .banner .b-label{flex:none}
+    .def-grid{grid-template-columns:150px 1fr 130px}
+  }
+  @media (max-width:560px){
+    .mini-grid.c3,.mini-grid.c4,.status-grid{grid-template-columns:1fr}
+    .set-row{grid-template-columns:1fr; gap:8px}
+    .kpis{grid-template-columns:1fr}
+    .heatmap{grid-template-columns:64px repeat(24,minmax(0,1fr)); column-gap:2px; row-gap:8px}
+    .hm-cell{height:16px; border-radius:2px}
+    .hm-d{font-size:11px}
+    .hm-corner,.hm-h{font-size:8px; line-height:12px}
+    .tbl .trow{display:block; padding:10px 4px}
+    .tbl .trow.head{display:none}
+    .tbl .tcell{display:flex; justify-content:space-between; gap:14px; padding:3px 8px; text-align:right}
+    .tbl .tcell::before{content:attr(data-label); color:var(--ink-2); font-size:12px; font-weight:500; text-align:left}
+    .blob.b1{width:520px;height:660px}.blob.b2{width:465px;height:595px}.blob.b3{width:460px;height:610px}
+    .blob.b4{width:380px;height:380px}.blob.b5{width:340px;height:340px}
+    .bg-waves{height:110px}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important; animation:none !important}
+  }
+
+.reference-inline-1{width:20px !important;height:20px !important;left:9% !important;top:30% !important}
+.reference-inline-2{width:14px !important;height:14px !important;left:56% !important;top:16% !important;animation-delay:-4s !important}
+.reference-inline-3{width:16px !important;height:16px !important;left:84% !important;top:44% !important;animation-delay:-7s !important}
+.reference-inline-4{width:12px !important;height:12px !important;left:34% !important;top:78% !important;animation-delay:-2.5s !important}
+.reference-inline-5{width:130px !important;height:34px !important;top:9% !important}
+.reference-inline-6{width:90px !important;height:26px !important;top:24% !important;animation-delay:-24s !important;animation-duration:64s !important}
+.reference-inline-7{width:160px !important;height:40px !important;top:58% !important;animation-delay:-40s !important;animation-duration:72s !important}
+.reference-inline-8{width:7px !important;height:7px !important;left:14% !important;top:18% !important}
+.reference-inline-9{width:5px !important;height:5px !important;left:26% !important;top:64% !important;animation-delay:-1.4s !important}
+.reference-inline-10{width:6px !important;height:6px !important;left:47% !important;top:12% !important;animation-delay:-2.6s !important}
+.reference-inline-11{width:5px !important;height:5px !important;left:63% !important;top:74% !important;animation-delay:-.8s !important}
+.reference-inline-12{width:4px !important;height:4px !important;left:78% !important;top:26% !important;animation-delay:-3.2s !important}
+.reference-inline-13{width:6px !important;height:6px !important;left:88% !important;top:58% !important;animation-delay:-2s !important}
+.reference-inline-14{animation-duration:22s !important}
+.reference-inline-15{margin-top:6px !important}
+.reference-inline-16{font-size:14px !important;line-height:20px !important;padding-top:10px !important}
+.reference-inline-17{display:flex !important;justify-content:flex-end !important}
+.reference-inline-18{font-size:15px !important}
+.reference-inline-19{flex:none !important}
+.reference-inline-20{font-size:14px !important;line-height:20px !important;font-weight:500 !important}
+.reference-inline-21{width:100% !important}
+.reference-inline-22{font-size:13px !important;color:var(--ink-2) !important}
+.reference-inline-23{grid-template-columns:1fr 1fr !important}
+.reference-inline-24{color:var(--ink) !important;font-weight:500 !important}
+.reference-inline-25{font-size:14px !important;line-height:20px !important}
+.reference-inline-26{gap:6px !important}
+.reference-inline-27{font-size:15px !important;line-height:24px !important;font-weight:600 !important}
+.reference-inline-28{font-size:15px !important;line-height:24px !important}
+.reference-inline-29{grid-template-columns:repeat(3,1fr) !important}
+.reference-inline-30{font-size:24px !important}
+.reference-inline-31{font-weight:500 !important}
+.reference-inline-32{max-width:none !important;background:linear-gradient(90deg, rgba(205,228,252,.8), rgba(230,242,253,.7)) !important}
+.reference-inline-33{color:var(--ink) !important;font-size:14px !important}
+.reference-inline-34{display:flex !important;align-items:center !important;gap:10px !important}
+.reference-inline-35{font-size:14px !important}
+.reference-inline-36{border:1px solid var(--glass-border) !important}
+.reference-inline-37{font-size:14px !important;line-height:20px !important;font-weight:600 !important}
+.reference-inline-38{display:flex !important;flex-direction:column !important;gap:12px !important}
+.reference-inline-39{font-size:13px !important}

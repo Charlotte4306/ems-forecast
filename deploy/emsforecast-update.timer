@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily EMSForecast refresh at 07:00 San Francisco time
+
+[Timer]
+OnCalendar=*-*-* 07:00:00 America/Los_Angeles
+Persistent=true
+RandomizedDelaySec=5min
+Unit=emsforecast-update.service
+
+[Install]
+WantedBy=timers.target
