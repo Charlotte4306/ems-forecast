@@ -2,7 +2,7 @@ const number=value=>Number(value).toLocaleString('vi-VN',{maximumFractionDigits:
 const dayLabel=day=>new Date(day+'T12:00:00Z').toLocaleDateString('vi-VN',{weekday:'short',day:'2-digit',month:'2-digit',timeZone:'UTC'});
 const issuedLabel=stamp=>new Date(stamp).toLocaleString('vi-VN',{timeZone:'America/Los_Angeles'});
 export function validateLive(data){
-  if(data.schemaVersion!==1||data.timezone!=='America/Los_Angeles'||data.target!=='medic-dispatches'||data.unit!=='dispatches'||data.timeField!=='dispatch_dttm'||data.identityField!=='rowid'||!Number.isFinite(Date.parse(data.generatedAt))||data.rows?.length!==168||data.days?.length!==7)throw Error('Chưa có bản dự báo đúng đơn vị lượt điều động.');
+  if(data.schemaVersion!==1||data.timezone!=='America/Los_Angeles'||data.target!=='medic-dispatches'||data.unit!=='dispatches'||data.timeField!=='received_dttm'||data.identityField!=='rowid'||!Number.isFinite(Date.parse(data.generatedAt))||data.rows?.length!==168||data.days?.length!==7)throw Error('Chưa có bản dự báo đúng đơn vị lượt điều động.');
   const times=new Set();
   for(const row of data.rows){if(!/^\d{4}-\d{2}-\d{2}T\d{2}:00:00$/.test(row.time)||times.has(row.time)||!Number.isFinite(row.prediction)||row.prediction<0)throw Error('Chuỗi dự báo chưa hợp lệ.');times.add(row.time);}
   for(const day of data.days){if(!/^\d{4}-\d{2}-\d{2}$/.test(day.date)||!Number.isFinite(day.prediction)||day.prediction<0||data.rows.filter(r=>r.time.startsWith(day.date)).length!==24)throw Error('Ngày dự báo chưa hợp lệ.');}
@@ -30,7 +30,7 @@ export function installLiveForecast(){
       const next=validateLive(await response.json());data=next;lastLoaded=Date.now();
       const stale=Date.now()-Date.parse(data.generatedAt)>36*3600000;
       status.textContent=(stale?'Kết quả đã cũ · ':data.refresh?.ok===false?'Lần cập nhật gần nhất chưa thành công · ':'Đã cập nhật · ')+issuedLabel(data.generatedAt)+' (San Francisco)';
-      source.textContent='Dữ liệu quan sát đến '+data.observedThrough.replace('T',' ')+' · Bản ghi nguồn mới nhất '+data.sourceLatest.replace('T',' ')+'.';
+      source.textContent='Lượt điều động gom theo giờ nhận cuộc gọi · Quan sát đến '+data.observedThrough.replace('T',' ')+' · Bản ghi nguồn mới nhất '+data.sourceLatest.replace('T',' ')+'.';
       $('#live-model').textContent=data.model+' · Huấn luyện lại mỗi ngày trên '+number(data.trainingHours/24)+' ngày hoàn chỉnh. MAE kiểm tra trên 14 ngày lịch sử giữ riêng: '+number(data.validation.mae)+' lượt điều động/giờ; không phải độ chính xác đã kiểm chứng cho 7 ngày tương lai.';
       days.replaceChildren();for(const day of data.days){const button=document.createElement('button');button.type='button';button.dataset.day=day.date;button.className='live-day';const label=document.createElement('span');label.textContent=dayLabel(day.date);const value=document.createElement('strong');value.textContent=number(day.prediction);const unit=document.createElement('small');unit.textContent='lượt điều động / ngày';const peak=document.createElement('small');peak.textContent='Đỉnh '+day.peakHour;button.append(label,value,unit,peak);button.addEventListener('click',()=>showDay(day.date));days.append(button);}
       showDay(data.days.some(day=>day.date===selected)?selected:data.days[0].date);

@@ -26,14 +26,16 @@ class LiveUpdateTests(unittest.TestCase):
             value = run(directory, datetime(2026, 11, 11, 18, tzinfo=timezone.utc), lookback=60)
             self.assertEqual(value['observedThrough'], '2026-11-10T23:00:00')
             self.assertEqual(value['trainingHours'], 1440)
-            self.assertIn("dispatch_dttm < '2026-11-11T00:00:00'", fetch.call_args.args[0]['$where'])
+            self.assertEqual(fetch.call_args_list[0].args[0]['$select'], 'max(received_dttm) as latest')
+            self.assertIn("received_dttm < '2026-11-11T00:00:00'", fetch.call_args.args[0]['$where'])
             self.assertIn('count(distinct rowid) as dispatch_count', fetch.call_args.args[0]['$select'])
-            self.assertIn('date_extract_hh(dispatch_dttm)', fetch.call_args.args[0]['$select'])
+            self.assertIn('date_extract_hh(received_dttm)', fetch.call_args.args[0]['$select'])
             self.assertNotIn('call_number', fetch.call_args.args[0]['$select'])
+            self.assertNotIn('dispatch_dttm', str(fetch.call_args.args[0]))
             self.assertEqual(forecast.call_args.args[1], datetime(2026, 11, 11))
             self.assertEqual(json.loads((Path(directory)/'forecast.json').read_text())['target'], 'medic-dispatches')
             self.assertEqual(value['unit'], 'dispatches')
-            self.assertEqual(value['timeField'], 'dispatch_dttm')
+            self.assertEqual(value['timeField'], 'received_dttm')
 
     def test_stale_source_preserves_previous_success(self):
         with tempfile.TemporaryDirectory() as directory:

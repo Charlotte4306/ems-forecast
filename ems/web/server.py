@@ -49,7 +49,7 @@ class Handler(BaseHTTPRequestHandler):
         if route == "/api/live-forecast":
             try:
                 value = json.loads((self.live_dir / 'forecast.json').read_text(encoding='utf-8'))
-                if value.get('schemaVersion') != 1 or value.get('target') != 'medic-dispatches' or value.get('unit') != 'dispatches' or len(value.get('rows', [])) != 168:
+                if value.get('schemaVersion') != 1 or value.get('target') != 'medic-dispatches' or value.get('unit') != 'dispatches' or value.get('timeField') != 'received_dttm' or len(value.get('rows', [])) != 168:
                     raise ValueError('Invalid live forecast')
                 try:
                     value['refresh'] = json.loads((self.live_dir / 'status.json').read_text(encoding='utf-8'))

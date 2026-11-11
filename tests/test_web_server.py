@@ -55,12 +55,19 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(result.exception.code, 503)
         result.exception.close()
         (self.root/'live').mkdir()
-        (self.root/'live/forecast.json').write_text(json.dumps({'schemaVersion':1, 'target':'medic-dispatches', 'unit':'dispatches', 'rows':[{'prediction':1}]*168}), encoding='utf-8')
+        snapshot = {'schemaVersion':1, 'target':'medic-dispatches', 'unit':'dispatches', 'timeField':'received_dttm', 'rows':[{'prediction':1}]*168}
+        (self.root/'live/forecast.json').write_text(json.dumps(snapshot), encoding='utf-8')
         (self.root/'live/status.json').write_text(json.dumps({'ok':False}), encoding='utf-8')
         with urlopen(self.base + '/api/live-forecast') as response:
             value = json.load(response)
         self.assertEqual(len(value['rows']), 168)
         self.assertFalse(value['refresh']['ok'])
+        snapshot['timeField'] = 'dispatch_dttm'
+        (self.root/'live/forecast.json').write_text(json.dumps(snapshot), encoding='utf-8')
+        with self.assertRaises(HTTPError) as wrong_clock:
+            urlopen(self.base + '/api/live-forecast')
+        self.assertEqual(wrong_clock.exception.code, 503)
+        wrong_clock.exception.close()
 
     def test_no_source_or_traversal_access(self):
         for route in ("/../secret.txt", "/%2e%2e/secret.txt", "/ems/models/lstm/train.py"):

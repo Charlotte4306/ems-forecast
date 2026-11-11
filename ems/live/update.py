@@ -14,6 +14,8 @@ from zoneinfo import ZoneInfo
 
 SOURCE = 'https://data.sf.gov/resource/nuek-vuh3.json'
 SF = ZoneInfo('America/Los_Angeles')
+# Match the shared training target: MEDIC response records by call-received hour.
+# Multiple units responding to one call remain distinct dispatches.
 
 
 def fetch(params):
@@ -97,7 +99,7 @@ def run(directory, now=None, lookback=180):
         raise ValueError('Training window must be between 60 and 365 days')
     now = now or datetime.now(timezone.utc)
     today = now.astimezone(SF).replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=None)
-    result = fetch({'$select': 'max(dispatch_dttm) as latest', '$where': "unit_type='MEDIC'"})
+    result = fetch({'$select': 'max(received_dttm) as latest', '$where': "unit_type='MEDIC'"})
     latest = datetime.fromisoformat(result[0]['latest'])
     if latest > now.astimezone(SF).replace(tzinfo=None) + timedelta(hours=1):
         raise ValueError('Source timestamp lies in the future')
@@ -106,8 +108,8 @@ def run(directory, now=None, lookback=180):
     # Exclude the latest source day completely; late arrivals can revise previous days.
     end = min(today, latest.replace(hour=0, minute=0, second=0, microsecond=0))
     start = end - timedelta(days=lookback)
-    params = {'$select': 'date_trunc_ymd(dispatch_dttm) as day,date_extract_hh(dispatch_dttm) as hour,count(distinct rowid) as dispatch_count',
-              '$where': "unit_type='MEDIC' AND dispatch_dttm >= '" + start.isoformat() + "' AND dispatch_dttm < '" + end.isoformat() + "'",
+    params = {'$select': 'date_trunc_ymd(received_dttm) as day,date_extract_hh(received_dttm) as hour,count(distinct rowid) as dispatch_count',
+              '$where': "unit_type='MEDIC' AND received_dttm >= '" + start.isoformat() + "' AND received_dttm < '" + end.isoformat() + "'",
               '$group': 'day,hour', '$order': 'day,hour', '$limit': '10000'}
     raw = fetch(params)
     if len(raw) >= 10000:
@@ -120,15 +122,16 @@ def run(directory, now=None, lookback=180):
              'trainingStart': start.isoformat(), 'trainingHours': len(history),
              'sourceSha256': hashlib.sha256(json.dumps(raw, sort_keys=True).encode()).hexdigest(),
              'model': 'Prophet seasonal', 'target': 'medic-dispatches', 'unit': 'dispatches',
-             'timeField': 'dispatch_dttm', 'identityField': 'rowid',
+             'timeField': 'received_dttm', 'identityField': 'rowid',
+             'targetDefinition': 'Distinct MEDIC response records grouped by received_dttm hour; not distinct calls or fleet size',
              'versions': {name: version(name) for name in ('prophet', 'pandas')},
              'validation': {'method': 'last-14-days-holdout', 'hours': 336, 'mae': round(mae, 3)},
              'rows': rows, 'days': days,
              'note': 'Daily estimates from completed historical days; not live dispatch instructions. Local wall-clock hours; DST days use 24 model slots.'}
     directory = Path(directory)
-    atomic_json(directory / 'hourly-history.json', {'source': SOURCE, 'target': 'medic-dispatches', 'timeField': 'dispatch_dttm', 'fetchedAt': generated, 'rows': history})
-    atomic_json(directory / 'archive' / ('history-medic-dispatches-' + now.strftime('%Y%m%d') + '.json'), {'source': SOURCE, 'target': 'medic-dispatches', 'timeField': 'dispatch_dttm', 'fetchedAt': generated, 'rows': history})
-    atomic_json(directory / 'archive' / (now.strftime('%Y%m%dT%H%M%SZ') + '-medic-dispatches.json'), value)
+    atomic_json(directory / 'hourly-history.json', {'source': SOURCE, 'target': 'medic-dispatches', 'timeField': 'received_dttm', 'fetchedAt': generated, 'rows': history})
+    atomic_json(directory / 'archive' / ('history-medic-dispatches-received-' + now.strftime('%Y%m%d') + '.json'), {'source': SOURCE, 'target': 'medic-dispatches', 'timeField': 'received_dttm', 'fetchedAt': generated, 'rows': history})
+    atomic_json(directory / 'archive' / (now.strftime('%Y%m%dT%H%M%SZ') + '-medic-dispatches-received.json'), value)
     atomic_json(directory / 'forecast.json', value)
     atomic_json(directory / 'status.json', {'lastAttempt': generated, 'lastSuccess': generated, 'ok': True})
     print('Published:', len(rows), 'hours /', len(days), 'days; observed through', value['observedThrough'], flush=True)
