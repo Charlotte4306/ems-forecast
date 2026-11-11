@@ -78,6 +78,7 @@ pd.set_option("display.width", 200)
 
 from ems.data import load_data
 from ems.evaluation import compute_metrics
+from ems.capacity_inputs import load_sarimax_day_ahead
 from ems.paths import OUTPUT_DIR as SHARED_OUTPUT_DIR
 from ems.models.lstm.config import N_FEATURES, HIDDEN_SIZE, NUM_LAYERS, DROPOUT, BATCH_SIZE
 from ems.models.lstm.preprocess import (build_block_dataloaders, load_data as lstm_load_data,
@@ -97,8 +98,9 @@ Q_UPPER    = 0.90                 # cận trên dự báo dùng cho kế hoạch
 COST_RATIO = 3                    # 1 xe-giờ thiếu "đắt" gấp mấy lần 1 xe-giờ thừa (kịch bản chính)
 COST_RATIOS = (2, 3, 5, 10, 20)  # các kịch bản tỷ lệ chi phí thiếu / thừa
 LSTM_RUN   = "vanilla_24h_block"
-# File dự báo SARIMAX khớp với checkpoints/sarimax/metadata.json (MAE test 2,997)
-SARIMAX_PRED = ROOT / "outputs" / "sarimax" / "rerun" / "pred_sarimax.csv"
+# SARIMAX 24h: tham số fit đến hết 2024, không refit bằng validation 2025.
+SARIMAX_PRED = ROOT / "outputs" / "sarimax" / "norefit" / "pred_sarimax.csv"
+SARIMAX_META = SARIMAX_PRED.parent / "metrics.json"
 # Prophet 24h từ nhánh feat/prophet-24h (cấu hình chọn theo validation 24h)
 PROPHET_TEST = ROOT / "outputs" / "prophet" / "day_ahead_24h" / "test_selected" / "predictions_24h.csv"
 PROPHET_VAL  = ROOT / "outputs" / "prophet" / "day_ahead_24h" / "selection" / "best_validation_predictions.csv"
@@ -147,8 +149,8 @@ mean_fc["Profile 2025"]  = np.array([prof_mean[k] for k in key_test])
 upper_fc["Profile 2025"] = np.array([prof_q[k] for k in key_test])
 
 # ── SARIMAX 24h ───────────────────────────────────────────────────────────────
-sar = pd.read_csv(SARIMAX_PRED, parse_dates=["timestamp"]).set_index("timestamp")
-assert sar.index.equals(ts_test) and np.array_equal(sar["actual"].values, y_test.values), "SARIMAX lệch giờ test"
+sar = load_sarimax_day_ahead(SARIMAX_PRED, SARIMAX_META, y_test,
+                             training_end=splits["train"]["ds"].iloc[-1])
 mean_fc["SARIMAX 24h"]  = sar["pred"].values
 upper_fc["SARIMAX 24h"] = sar["hi"].values
 print("SARIMAX: đã nạp", SARIMAX_PRED.relative_to(ROOT))
@@ -792,7 +794,7 @@ md(r"""
 * **$\rho_{max}$ chỉ là kịch bản**: cùng một mức $\rho$, đội xe nhỏ (ca đêm) rủi ro hết xe cao hơn đội xe lớn. Bảng 7.3 (Erlang B) cho thấy mức chênh.
 * **Chi phí là tương đối** (đơn vị xe-giờ), chưa phải tiền thật; kết luận "phương án tốt nhất" thay đổi theo tỷ lệ thiếu/thừa (Bảng 7.1 và Bước 5).
 * **Cận trên P90 của các nguồn được tạo khác nhau** (SARIMAX dùng khoảng tin cậy của mô hình; LSTM và Profile dùng phân vị thực nghiệm năm 2025). Xem cột "Độ phủ P90" ở Bước 1 để biết cận trên nào đúng mức hơn.
-* **Mốc dữ liệu học khác nhau**: SARIMAX fit lại trên 2025; LSTM và Prophet chỉ học 2019–2024 (Prophet vẫn dùng số thực tế 2025 làm lịch sử đặc trưng).
+* **Mốc fit tham số**: SARIMAX 24h, LSTM và Prophet học đến hết 2024; SARIMAX không refit bằng validation 2025. Quan sát lịch sử 2025 được dùng để cập nhật trạng thái/đặc trưng trước test 2026.
 * Chưa mô hình hóa vị trí trạm, thời gian di chuyển, hay ưu tiên cuộc gọi; số xe ở đây là **số xe sẵn sàng toàn thành phố**.
 """)
 
