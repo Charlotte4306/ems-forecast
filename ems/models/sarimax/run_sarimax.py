@@ -1,4 +1,4 @@
-"""Select on validation, refit the latest year, forecast test in 24-hour blocks."""
+"""Select on validation and evaluate fixed train parameters in hourly forecast blocks."""
 import argparse
 import hashlib
 from importlib.metadata import version
@@ -27,9 +27,9 @@ def fit_model(series, order, K, maxiter, optimizer="powell"):
     return result
 
 
-def run_experiment(data_dir=DATA_DIR, output_dir=OUTPUT_DIR / "sarimax",
-                   checkpoint_dir=CHECKPOINT_DIR / "sarimax", window_hours=8760,
-                   horizon=24, maxiter=300, candidates=GRID, optimizer="powell", refit=True):
+def run_experiment(data_dir=DATA_DIR, output_dir=OUTPUT_DIR / "sarimax/norefit",
+                   checkpoint_dir=CHECKPOINT_DIR / "sarimax", window_hours=52440,
+                   horizon=24, maxiter=300, candidates=GRID, optimizer="powell", refit=False):
     """refit=False keeps the parameters fitted on the train window (like Prophet/LSTM,
     which are not refitted after validation); validation is only fed through the
     Kalman filter so the state is current when the test period starts."""
@@ -37,7 +37,7 @@ def run_experiment(data_dir=DATA_DIR, output_dir=OUTPUT_DIR / "sarimax",
         raise ValueError("window_hours >= 168, 1 <= horizon <= 168 and maxiter >= 1 required; seasonal lag-168 baseline must be available at each block origin")
     if optimizer not in ("powell", "lbfgs"):
         raise ValueError("Optimizer must be powell or lbfgs")
-    from ems.models.sarimax.capacity_planning import run_capacity
+    from ems.models.sarimax.evaluate import evaluate_saved
     start = time.perf_counter()
     data_dir, output_dir, checkpoint_dir = map(Path, (data_dir, output_dir, checkpoint_dir))
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -92,7 +92,7 @@ def run_experiment(data_dir=DATA_DIR, output_dir=OUTPUT_DIR / "sarimax",
         "interval_level": 0.8, "converged": converged, "refit": refit,
         "protocol": protocol,
         "time_convention": "Naive timestamps preserved from input calendar columns; no timezone conversion.",
-        "comparability": "Prophet/LSTM artifacts use a different training cutoff and one-hour evaluation protocol; aligned timestamps alone do not make protocols equivalent.",
+        "comparability": "Compare only artifacts with matching training cutoff, horizon, timestamps and actuals. Canonical h1/norefit runs use train through 2024, validation 2025 and no parameter refit before test.",
         "splits": {name: {"rows": len(values), "start": str(values.index[0]), "end": str(values.index[-1])}
                    for name, values in splits.items()},
         "final_fit": {"rows": len(fit_rows), "start": str(fit_rows.index[0]), "end": str(fit_rows.index[-1])},
@@ -109,8 +109,7 @@ def run_experiment(data_dir=DATA_DIR, output_dir=OUTPUT_DIR / "sarimax",
     fitted.save(checkpoint_dir / "best_model.pkl")
     write_json(checkpoint_dir / "metadata.json", metadata)
     write_json(output_dir / "metrics.json", metadata)
-    # Calendar baseline in the capacity report uses the same history as the metric baselines.
-    run_capacity(data_dir, output_dir / "pred_sarimax.csv", output_dir, window_hours=len(history))
+    evaluate_saved(data_dir, output_dir / "pred_sarimax.csv", output_dir)
     print(json.dumps(metadata["test_metrics"], indent=2), flush=True)
     return metadata
 
@@ -118,25 +117,28 @@ def run_experiment(data_dir=DATA_DIR, output_dir=OUTPUT_DIR / "sarimax",
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data-dir", type=Path, default=DATA_DIR)
-    parser.add_argument("--output-dir", type=Path, default=OUTPUT_DIR / "sarimax")
+    parser.add_argument("--output-dir", type=Path, default=OUTPUT_DIR / "sarimax/norefit")
     parser.add_argument("--checkpoint-dir", type=Path, default=CHECKPOINT_DIR / "sarimax")
-    parser.add_argument("--window-hours", type=int, default=8760)
+    parser.add_argument("--window-hours", type=int, default=52440)
     parser.add_argument("--horizon", type=int, default=24)
     parser.add_argument("--maxiter", type=int, default=300)
     parser.add_argument("--optimizer", choices=("powell", "lbfgs"), default="powell",
                         help="Powell default avoids the non-converging L-BFGS fit observed on this dataset")
-    parser.add_argument("--no-refit", action="store_true",
-                        help="Keep train-window parameters for test (same protocol as Prophet/LSTM)")
-    parser.add_argument("--evaluate-only", action="store_true", help="Evaluate saved CSV and regenerate capacity reports without fitting")
+    refit_args = parser.add_mutually_exclusive_group()
+    refit_args.add_argument("--refit", action="store_true", help="Experimental refit; use a separate output directory")
+    refit_args.add_argument("--no-refit", action="store_true", help="Keep train parameters (the default)")
+    parser.add_argument("--evaluate-only", action="store_true", help="Evaluate saved CSV and regenerate forecast reports without fitting")
     args = parser.parse_args(argv)
+    if args.refit and args.output_dir.resolve() in {
+            (OUTPUT_DIR / "sarimax/norefit").resolve(), (OUTPUT_DIR / "sarimax/h1").resolve()}:
+        parser.error("Refit experiments require a separate --output-dir; canonical comparisons use no refit")
     if args.evaluate_only:
-        from ems.models.sarimax.capacity_planning import run_capacity
-        run_capacity(args.data_dir, args.output_dir / "pred_sarimax.csv", args.output_dir,
-                     window_hours=args.window_hours)
+        from ems.models.sarimax.evaluate import evaluate_saved
+        evaluate_saved(args.data_dir, args.output_dir / "pred_sarimax.csv", args.output_dir)
     else:
         run_experiment(args.data_dir, args.output_dir, args.checkpoint_dir,
                        args.window_hours, args.horizon, args.maxiter, optimizer=args.optimizer,
-                       refit=not args.no_refit)
+                       refit=args.refit)
 
 
 if __name__ == "__main__":

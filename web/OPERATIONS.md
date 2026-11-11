@@ -1,34 +1,37 @@
-# Preview vận hành EMSForecast
+# Vận hành giao diện
 
-Chạy từ thư mục gốc sau khi kích hoạt `.venv`:
+Chạy tại repo root: `python -m ems.web --port 8501`, mở http://127.0.0.1:8501. Server dùng Python stdlib, không huấn luyện theo request và không nhận upload CSV.
+
+Mặc định UI là Prophet 24h, chính sách Trung bình, mức bận 80%, ba ca từ 00:00 và chi phí thiếu/thừa 3:1. Ngày/profile/kịch bản được giữ khi chuyển màn. Dự báo 7 ngày nằm sau Đánh giá mô hình.
+
+## Snapshot thí nghiệm lịch sử
+
+`outputs/web/dataset.json` có `profiles` và `operations`. Không còn bảng root `rows` của demo hai mô hình cũ hoặc metadata “ARIMA chưa có”. Bốn profile hiện tại: Prophet 1h, Prophet 24h, SARIMAX 24h no-refit, LSTM 24h block.
+
+Tạo lại từ đầu bằng môi trường ML:
 
 ```powershell
-python -m ems.web --port 8502
+.\.venv\Scripts\python.exe -m ems.web.prepare_dashboard
+.\.venv\Scripts\python.exe -m ems.web.prepare_operations --source-ref HEAD
 ```
 
-Mở http://127.0.0.1:8502. Mặc định Prophet 24h, Trung bình, mức bận 80%, ba ca bắt đầu từ 00:00 và chi phí thiếu/thừa 3:1. Ngày, mô hình và kịch bản giữ nguyên khi chuyển màn.
+Bước đầu tạo profile Prophet 1h từ CSV trong working tree. Bước hai đọc ba dự báo 24h và kết quả năng lực từ **Git revision đã commit**, chạy inference LSTM với code/data/scalers/weights của revision đó trong thư mục tạm. Không train, refit hoặc checkout. `HEAD` phải là revision chứa các artifact mong muốn; thay bằng hash cụ thể để cố định nguồn. Thay đổi chưa commit không được bước hai đọc.
 
-## Chuẩn bị dữ liệu offline
+Cả hai hỗ trợ `--destination <path>` để xuất thử. Sau bước đầu snapshot chưa có đủ dữ liệu vận hành; hoàn thành bước hai trước khi sử dụng. `--prophet24-ref <revision>` của bước đầu là tùy chọn để chỉ thêm Prophet 24h, không thay thế bước chuẩn bị vận hành.
 
-```powershell
-python -m ems.web.prepare_operations --source-ref d5645d20ad9d6835d0895744364cac4f631f33eb
-```
+Kết quả phải cùng timestamp/actual trên 6.796 giờ. Kế hoạch ca chỉ chấm 6.792 giờ, bỏ bốn giờ cuối chưa đủ ca. Trung bình/P90 được chốt trước test; chi phí là điểm kịch bản, không phải tiền thật. Nhu cầu xe đối chiếu là đầu ra của công thức workload, không phải roster.
 
-Lệnh đọc code, dữ liệu, scaler và checkpoint từ revision đã chỉ định trong thư mục tạm; chạy inference LSTM 24h, không train/refit, không checkout hoặc sửa file mô hình. Cập nhật `outputs/web/dataset.json` có sẵn, giữ các trường legacy/profile Prophet 1h và bổ sung ba profile 24h cùng kết quả năng lực, báo cáo chi phí và hash nguồn. Nếu đang tạo snapshot từ đầu, chạy quy trình export/prepare_dashboard hiện có trước.
+## Dữ liệu tự động
 
-Backend `/api/dataset` phục vụ snapshot đó; VPS không cần Torch/Prophet hay checkpoint. Không có inference theo yêu cầu, upload CSV hoặc cập nhật dữ liệu trực tiếp trong phạm vi này.
-
-Chi phí là điểm kịch bản. Nhu cầu xe đối chiếu được ước tính từ lượt điều động thực tế và thời gian bận, không phải số xe trực thực tế. Bảng ca chỉ chấm 6.792 giờ; bốn giờ cuối của 6.796 giờ test chưa đủ ca. Các phương án Trung bình/P90 được chốt trước; so sánh chi phí trên test chỉ mang tính hậu kiểm.
+`python -m ems.live.update --output-dir outputs/live` tải aggregate DataSF và tạo forecast bảy ngày bằng Prophet mùa vụ riêng. Server đọc ở `EMS_LIVE_DIR` hoặc `outputs/live`. Snapshot có target `medic-dispatches`, `timeField=received_dttm`; snapshot cũ theo số cuộc gọi hoặc dispatch-time bị từ chối. Worker và timer được mô tả trong [LIVE-FORECAST.md](../deploy/LIVE-FORECAST.md).
 
 ## Kiểm tra
 
 ```powershell
-python -m unittest discover -s tests -p "test_web*.py"
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_web*.py"
+node --test tests/*.test.mjs
 node tests/test_web_operations.mjs
+node scripts/check_web_reference.mjs <path-to-jsdom/lib/api.js>
 ```
 
-Kiểm tra DOM tùy chọn dùng jsdom cài ngoài repo:
-
-```powershell
-node scripts/check_web_reference.mjs <duong-dan-jsdom/lib/api.js> "?profile=lstm_h24&day=2026-10-11#chiphi"
-```
+Xem [triển khai release](../deploy/README.md) và [thiết kế UI](DESIGN.md). Việc sửa code local không tự cập nhật server đã triển khai.

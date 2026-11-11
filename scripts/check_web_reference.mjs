@@ -63,5 +63,5 @@ document.querySelector('#motion-switch').click();document.querySelector('#btn-se
 assert.equal(JSON.parse(localStorage.getItem('emsforecast.reference-preferences')).motion,true);
 document.querySelector('.ops-flow button[data-destination="kehoach"]').click();
 assert.equal(document.querySelectorAll('.ops-press-dot').length,0);
-console.log('DOM binding passed:',process.argv[3]||'default','forecast hours:',window.EMS.forecast.length,'168 heatmap cells, 7 screens, navigation, settings');
+console.log('DOM binding passed:',process.argv[3]||'default','forecast hours:',window.EMS.forecast.length,'168 heatmap cells, 8 screens, navigation, settings');
 dom.window.close();

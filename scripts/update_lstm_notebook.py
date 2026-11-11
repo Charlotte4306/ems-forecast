@@ -16,7 +16,7 @@ def create_cell(cell_type, source, cell_id=None):
 
 cells = [
     create_cell('markdown', """# Thí Nghiệm LSTM: So Sánh 1-Hour Rolling vs 24-Hour Block
-Dự báo nhu cầu cuộc gọi cấp cứu San Francisco (`call_count`) trên toàn bộ 6.796 giờ của tập Test năm 2026.
+Dự báo số lượt điều động xe MEDIC tại San Francisco (`call_count`) trên toàn bộ 6.796 giờ của tập Test năm 2026.
 Notebook thực hiện huấn luyện và so sánh hai kịch bản nghiệp vụ:
 - **1-Hour Rolling (Dự báo cuốn chiếu từng giờ):** Cập nhật dữ liệu quan sát sau mỗi giờ, dự báo 1 giờ tiếp theo ($t$). Phục vụ điều phối tác chiến thời gian thực (Intraday Dispatching).
 - **24-Hour Block (Dự báo khối 24 giờ):** Đầu ngày dự báo một lần cho toàn bộ 24 giờ của ngày hôm sau ($t \\dots t+23$) mà không quan sát dữ liệu giữa chừng. Phục vụ lập lịch kíp trực (Day-ahead Rostering), đồng bộ chuẩn với mô hình SARIMAX.""", 'cell_0'),
@@ -219,7 +219,7 @@ for day in range(0, sample_hours + 1, 24):
 
 plt.title("So Sánh Dự Báo 1 Tuần (168h): LSTM 1-Hour Rolling vs LSTM 24-Hour Block", fontsize=13, pad=10)
 plt.xlabel("Giờ trong tuần (0h - 168h)", fontsize=11)
-plt.ylabel("Số cuộc gọi cấp cứu (Calls/hour)", fontsize=11)
+plt.ylabel("Lượt điều động xe / giờ", fontsize=11)
 plt.legend(loc="upper right", framealpha=0.6)
 plt.grid(True, alpha=0.3)
 plt.tight_layout()

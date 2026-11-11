@@ -20,7 +20,7 @@ class ServerTests(unittest.TestCase):
         (self.root / "web/index.html").write_text("<h1>EMS</h1>", encoding="utf-8")
         (self.root / "secret.txt").write_text("private", encoding="utf-8")
         self.dataset = self.root / "dataset.json"
-        self.dataset.write_text(json.dumps({"schemaVersion": 1, "rows": [{"actual": 1}]}), encoding="utf-8")
+        self.dataset.write_text(json.dumps({"schemaVersion": 1, "profiles": {"prophet_h1": {"rows": [{"actual": 1}]}}}), encoding="utf-8")
         self.server = ThreadingHTTPServer(("127.0.0.1", 0), partial(Handler, web_root=self.root / "web", dataset=self.dataset, live_dir=self.root / 'live'))
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
@@ -81,7 +81,7 @@ class ServerTests(unittest.TestCase):
         with self.assertRaises(HTTPError) as result:
             urlopen(self.base + "/api/dataset")
         self.assertEqual(result.exception.code, 503)
-        self.assertIn(b"ems.web.export", result.exception.read())
+        self.assertIn(b"ems.web.prepare_dashboard", result.exception.read())
         result.exception.close()
         with self.assertRaises(HTTPError) as health:
             urlopen(self.base + "/health")
@@ -89,9 +89,11 @@ class ServerTests(unittest.TestCase):
         health.exception.close()
 
     def test_invalid_dataset_is_rejected(self):
-        self.dataset.write_text('{"schemaVersion":9,"rows":[]}', encoding="utf-8")
-        with self.assertRaises(ValueError):
-            read_dataset(self.dataset)
+        for value in ({"schemaVersion": 9}, {"schemaVersion": 1, "rows": [{"actual": 1}]},
+                      {"schemaVersion": 1, "profiles": {"prophet_h1": {"rows": []}}}):
+            self.dataset.write_text(json.dumps(value), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                read_dataset(self.dataset)
 
 
 if __name__ == "__main__":

@@ -18,7 +18,7 @@ PAGE_ROUTES = {"/", "/overview", "/forecast", "/fleet-plan", "/scenario-costs",
 def read_dataset(path=DATASET):
     raw = Path(path).read_bytes()
     value = json.loads(raw)
-    if value.get("schemaVersion") != 1 or not value.get("rows"):
+    if value.get("schemaVersion") != 1 or not value.get("profiles", {}).get("prophet_h1", {}).get("rows"):
         raise ValueError("Invalid dataset schema")
     return raw
 
@@ -68,7 +68,7 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 body = read_dataset(self.dataset)
             except (OSError, ValueError):
-                return self.respond(503, b'{"error":"Run python -m ems.web.export to prepare the demo dataset."}', "application/json")
+                return self.respond(503, b'{"error":"Run python -m ems.web.prepare_dashboard then ems.web.prepare_operations to prepare the dataset."}', "application/json")
             return self.respond(200, body, "application/json; charset=utf-8")
         target = (self.web_root / ("index.html" if route.rstrip("/") in PAGE_ROUTES or route == "/" else route.lstrip("/"))).resolve()
         if not target.is_relative_to(self.web_root) or not target.is_file():

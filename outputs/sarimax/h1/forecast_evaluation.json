@@ -1,0 +1,15 @@
+{
+  "rows": 6796,
+  "unit": "dispatches/hour",
+  "metrics": {
+    "MAE": 3.0161639059953056,
+    "RMSE": 3.8777608592662265,
+    "MAPE (%)": 33.67252565639263,
+    "R2": 0.3921043461735091,
+    "WAPE (%)": 25.832850109825195,
+    "coverage_80 (%)": 81.41553855208946,
+    "mean_interval_width": 9.925323426244393
+  },
+  "interval_level": 0.8,
+  "interval_coverage_percent": 81.41553855208946
+}

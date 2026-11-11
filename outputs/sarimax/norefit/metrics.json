@@ -18,7 +18,7 @@
   "refit": false,
   "protocol": "Fit latest train window; select on validation; no refit (parameters fixed from train window), validation observations only update the filter state; forecast consecutive test blocks, update state after observing each block.",
   "time_convention": "Naive timestamps preserved from input calendar columns; no timezone conversion.",
-  "comparability": "Prophet/LSTM artifacts use a different training cutoff and one-hour evaluation protocol; aligned timestamps alone do not make protocols equivalent.",
+  "comparability": "Fit train through 2024, select on validation 2025, no parameter refit before test. Compare only matching horizons, timestamps and actuals; h1 and 24h are separate experiments.",
   "splits": {
     "train": {
       "rows": 52440,
