@@ -1,4 +1,4 @@
-"""Train or evaluate the original LSTM architecture through a CLI."""
+"""Run the notebook's LSTM training/evaluation workflow through a CLI."""
 import argparse
 import json
 from pathlib import Path
@@ -11,7 +11,7 @@ import torch
 
 from ems.models.lstm.config import (
     BATCH_SIZE, DEFAULT_SEQ_LEN, DROPOUT, HIDDEN_SIZE, N_FEATURES,
-    NUM_EPOCHS, NUM_LAYERS, OUTPUT_DIR, SEED,
+    NUM_EPOCHS, NUM_LAYERS, OUTPUT_DIR, CKPT_DIR, SEED,
 )
 from ems.models.lstm.evaluate import evaluate_all, predict, predict_24h_blocks
 from ems.models.lstm.model import MODEL_REGISTRY, build_model
@@ -22,6 +22,18 @@ from ems.models.lstm.preprocess import (
 )
 from ems.models.lstm.train import load_checkpoint, train
 from ems.data import load_data as load_hourly_data
+
+
+def notebook_run_name(architecture, seq_len, forecast_horizon):
+    """Match the two seq24 Vanilla experiments in lstm_experiment.ipynb.
+
+    Other configurations retain their existing explicit configuration names.
+    Never treat the legacy vanilla_seq24 weights as a newly trained 1h model.
+    """
+    if architecture == "vanilla" and seq_len == 24:
+        return "vanilla_1h_rolling" if forecast_horizon == 1 else "vanilla_24h_block"
+    suffix = f"_block{forecast_horizon}" if forecast_horizon > 1 else ""
+    return f"{architecture}_seq{seq_len}{suffix}"
 
 
 def main(argv=None):
@@ -39,8 +51,15 @@ def main(argv=None):
         parser.error("epochs and batch-size must be positive")
     torch.manual_seed(SEED)
     np.random.seed(SEED)
-    horizon_suffix = f"_block{args.forecast_horizon}" if args.forecast_horizon > 1 else ""
-    run_name = f"{args.architecture}_seq{args.seq_len}{horizon_suffix}"
+    run_name = notebook_run_name(args.architecture, args.seq_len, args.forecast_horizon)
+    if args.evaluate_only:
+        checkpoint = Path(CKPT_DIR) / f"{run_name}_best.pth"
+        if not checkpoint.is_file():
+            parser.error(
+                f"Missing notebook checkpoint: {checkpoint}. "
+                "Run the corresponding notebook training cells or run this CLI "
+                "without --evaluate-only first. Legacy checkpoints are not substituted."
+            )
     model = build_model(args.architecture, n_features=N_FEATURES,
                         hidden_size=HIDDEN_SIZE, num_layers=NUM_LAYERS, dropout=DROPOUT,
                         forecast_horizon=args.forecast_horizon)
@@ -67,14 +86,21 @@ def main(argv=None):
             train_dl, val_dl, test_dl, _, tgt_scaler = build_dataloaders(args.seq_len, args.batch_size)
         history = train(model, train_dl, val_dl, run_name=run_name, num_epochs=args.epochs)
     
-    pred_fn = predict_24h_blocks if args.forecast_horizon > 1 else predict
-    y_true, y_pred, metrics = evaluate_all(model, test_dl, tgt_scaler, run_name, history, predict_fn=pred_fn)
     test = load_hourly_data()["test"]  # đủ 6.796 giờ, không cắt seq_len nữa
+    pred_fn = predict_24h_blocks if args.forecast_horizon > 1 else predict
+    prediction_options = {"n_target_hours": len(test)} if args.forecast_horizon > 1 else {}
+    y_true, y_pred, metrics = evaluate_all(
+        model, test_dl, tgt_scaler, run_name, history,
+        predict_fn=pred_fn, **prediction_options,
+    )
+    if len(y_true) != len(test) or len(y_pred) != len(test):
+        raise ValueError("Predictions must cover the same test hours as the notebook")
     output_dir = Path(OUTPUT_DIR)
     pd.DataFrame({"ds": test.ds.to_numpy(), "y": y_true, "yhat": y_pred}).to_csv(
         output_dir / f"test_predictions_{run_name}.csv", index=False)
     (output_dir / f"metrics_{run_name}.json").write_text(
         json.dumps({"run_name": run_name, "seq_len": args.seq_len,
+                    "forecast_horizon": args.forecast_horizon,
                     "n_hours": len(test), "metrics": metrics}, indent=2, allow_nan=False),
         encoding="utf-8")
 
