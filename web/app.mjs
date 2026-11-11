@@ -1,3 +1,8 @@
+import {installReferenceMotion} from './reference-motion.mjs';
+import {installZenlessShell} from './zenless.mjs';
+import {screenFromLocation} from './routes.mjs';
+import {installLiveForecast} from './live.mjs';
+import {enhanceOperations} from './operations.mjs';
 import {score,dayRows,validateProfiles} from './dashboard.mjs';
 import {csv} from './analysis.mjs';
 
@@ -30,7 +35,7 @@ function saveSettings(){saved={density:$('#density-group .sel').dataset.density,
 async function start(){
   const response=await fetch('/api/dataset');if(!response.ok)throw new Error('Không tải được dữ liệu. Kiểm tra máy chủ rồi tải lại trang.');
   const dataset=validateProfiles(await response.json());
-  const query=new URLSearchParams(location.search),key=Object.hasOwn(dataset.profiles,query.get('profile'))?query.get('profile'):(dataset.profiles.prophet_h24?'prophet_h24':'prophet_h1');
+  const query=new URLSearchParams(location.search),requestedProfile=query.get('profile')?.replaceAll('-','_'),key=Object.hasOwn(dataset.profiles,requestedProfile)?requestedProfile:(dataset.profiles.prophet_h24?'prophet_h24':'prophet_h1');
   const profile=dataset.profiles[key],all=profile.rows;
   let day=query.get('day')||'2026-09-29';if(!dayRows(profile,day).length)day=all[0].time.slice(0,10);
   const current=dayRows(profile,day),previousDate=new Date(day+'T00:00:00Z');previousDate.setUTCDate(previousDate.getUTCDate()-1);
@@ -41,7 +46,7 @@ async function start(){
   const total=context.reduce((s,r)=>s+r.actual,0),days=new Set(context.map(r=>r.time.slice(0,10))).size;
   const forecastTotal=current.reduce((s,r)=>s+r.prediction,0),peak=current.reduce((a,b)=>b.prediction>a.prediction?b:a),metrics=score(all);
   const mode=profile.horizon===24?'24 giờ từ đầu ngày':'1 giờ, cập nhật từng giờ';
-  const initialScreen=location.hash.slice(1);
+  const initialScreen=screenFromLocation(location);
   // Replace only labels and values inside the reference's original elements.
   $$('.page-foot').forEach(n=>n.textContent='EMSForecast · San Francisco · Đánh giá trên dữ liệu lịch sử · Thời gian theo dữ liệu nguồn');
   text('.side-context p:nth-child(2)','Đánh giá trên dữ liệu lịch sử');
@@ -58,16 +63,16 @@ async function start(){
   const kpiData=[[fmt(total,0)+' lượt',`${range} · ${context.length} giờ`,total,' lượt',0],[fmt(total/days)+' lượt/ngày',`Trung bình ${days} ngày có dữ liệu`,total/days,' lượt/ngày',1],['— phút','Chưa đóng gói dữ liệu thời gian xe bận',null,'',0],[fmt(forecastTotal)+' lượt',`${date(day)} · ${mode}`,forecastTotal,' lượt',1]];
   overviewKpis.forEach((n,i)=>{const [value,note,count,suffix,decimals]=kpiData[i],v=n.querySelector('.k-value');v.textContent=value;v.removeAttribute('data-count');if(count!==null){v.dataset.count=count;v.dataset.suffix=suffix;v.dataset.decimals=decimals;}n.querySelector('.k-note').textContent=note;});
   const before=previous.length?short(previous[0].time):'Không có ngày trước';
-  const trendText=`Lượt/giờ · Quan sát ${before} và dự báo ${short(day)} · Prophet · ${mode}`;
+  const trendText=`Lượt/giờ · Quan sát ${before} và dự báo ${short(day)} · ${profile.name} · ${mode}`;
   for(const [p,title] of [['tongquan','Xu hướng lượt điều động'],['dubao','Lượt điều động quan sát và dự báo']]){
     sectionText(p,title,'.sub',trendText);
-    sectionText(p,title,'.chart-legend',`━━ Quan sát lịch sử     ┄┄ Dự báo Prophet     │ ${profile.horizon===24?'Phát hành: '+short(day)+' · 00:00':'Cập nhật sau từng giờ'}`);
+    sectionText(p,title,'.chart-legend',`━━ Quan sát lịch sử     ┄┄ Dự báo ${profile.name}     │ ${profile.horizon===24?'Phát hành: '+short(day)+' · 00:00':'Cập nhật sau từng giờ'}`);
   }
   text('#chart + .chart-note','Khoảng bất định: chưa cung cấp trong phiên bản hiện tại.');
   $('#chart').setAttribute('aria-label',trendText);$('#chart-dubao').setAttribute('aria-label',trendText);
   sectionText('tongquan','Nhịp điều động theo thứ và giờ','.sub',`Trung bình lượt/giờ · Toàn tập kiểm tra ${fmt(all.length,0)} giờ · Dữ liệu thật`);
   $('#heatmap').setAttribute('aria-label','Trung bình lượt điều động thực tế theo thứ và giờ trong tập kiểm tra');
-  sectionText('tongquan','Các khung giờ nhu cầu cao','.sub',`${date(day)} · Dự báo Prophet · ${mode}`);
+  sectionText('tongquan','Các khung giờ nhu cầu cao','.sub',`${date(day)} · Dự báo ${profile.name} · ${mode}`);
   cellRows(section('tongquan','Các khung giờ nhu cầu cao').querySelector('.tbl'),['Khung giờ','Lượt dự báo','Đơn vị'],[...current].sort((a,b)=>b.prediction-a.prediction).slice(0,4).map(r=>[r.time.slice(11,16)+'–'+String(Number(r.time.slice(11,13))+1).padStart(2,'0')+':00',fmt(r.prediction),'lượt/giờ']),'peak-grid');
   values('#screen-tongquan .note-panel p',[ 'Lượt điều động không đồng nghĩa với số xe cần trực. Năng lực xe phụ thuộc thời gian bận và công việc kéo dài từ giờ trước.','Chưa đánh giá thiếu xe: bộ tính năng lực chưa được kết nối. Không lấy số lượt dự báo trừ số xe có thể bố trí.',`Đỉnh dự báo: ${fmt(peak.prediction)} lượt/giờ lúc ${peak.time.slice(11,16)}. Đây là tín hiệu nhu cầu, không phải số xe cần trực.`]);
   // Forecast configuration retains the original value-box and segmented styles.
@@ -75,10 +80,10 @@ async function start(){
   config.querySelector('.sub').textContent=`Chân trời đang xem: ${mode} · Độ chi tiết: theo giờ`;
   config.querySelector('.seg.sel').textContent=profile.horizon===24?'24 giờ · Đã chọn':'1 giờ · Đã chọn';
   const modelBox=config.querySelector('.value-box');modelBox.replaceChildren();const select=document.createElement('select');select.setAttribute('aria-label','Mô hình và chân trời dự báo');
-  Object.entries(dataset.profiles).forEach(([k,p])=>{const option=document.createElement('option');option.value=k;option.textContent=`Prophet · ${p.horizon} giờ`;option.selected=k===key;select.append(option);});
-  for(const name of ['SARIMAX','LSTM']){const option=document.createElement('option');option.textContent=name+' · Chờ kết quả chung';option.disabled=true;select.append(option);}modelBox.append(select);
-  select.addEventListener('change',()=>{const url=new URL(location.href);url.searchParams.set('profile',select.value);location.href=url.href;});
-  config.querySelector('.field .sub').textContent='SARIMAX và LSTM: chờ kết quả cùng giao thức đánh giá.';
+  Object.entries(dataset.profiles).forEach(([k,p])=>{const option=document.createElement('option');option.value=k;option.textContent=`${p.name} · ${p.horizon} giờ`;option.selected=k===key;select.append(option);});
+  modelBox.append(select);
+  select.addEventListener('change',()=>{const url=new URL(location.href);url.searchParams.set('profile',select.value.replaceAll('_','-'));location.href=url.href;});
+  config.querySelector('.field .sub').textContent='Các mô hình 24h được đối chiếu trên cùng 6.796 giờ kiểm tra.';
   config.querySelectorAll('.field')[1].querySelector('p').textContent=`Theo giờ · Ngày dự báo: ${date(day)}`;
   text('#screen-dubao .intro p',profile.description);
   text('#btn-forecast','Xem kết quả dự báo');
@@ -159,11 +164,11 @@ async function start(){
   window.EMS={observed:previous.map(r=>r.actual),forecast:current.map(r=>r.prediction),peakHour:Number(peak.time.slice(11,13)),peakValue:peak.prediction,chartMax:maximum,timelineLabels:labels,overviewGrid:[[maximum,12],[maximum*2/3,76],[maximum/3,140],[0,204]],
     heatDays:means.map((d,i)=>[['Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy','Chủ nhật'][i],d.map(v=>[v===null?'Chưa có dữ liệu':Number(v.toFixed(1)),v===null?0:Math.min(3,Math.floor(v/heatMax*4))])]),
     charts:[{id:'chart-dubao',config:{...common,dividerX:586.3,xlabels:labels,series:[{data:previous.map(r=>r.actual),color:'#334155',day:0},{data:current.map(r=>r.prediction),color:'#754BFF',dash:true,day:1}]}},{id:'chart-danhgia',config:{...common,series:[{data:current.map(r=>r.actual),color:'#334155'},{data:current.map(r=>r.prediction),color:'#754BFF',dash:true}]}},{id:'chart-lichsu',config:{max:dailyMax,grid:[dailyMax,dailyMax*2/3,dailyMax/3,0],series:[{data:dailyValues,color:'#334155'}],xlabels:[...daily.keys()].filter((d,i)=>i===0||i%7===0||i===daily.size-1).map(d=>[short(d),45+[...daily.keys()].indexOf(d)/Math.max(1,daily.size-1)*1060])}}],diffs,diffScale:70/Math.max(1,...diffs.map(Math.abs)),
-    download(){const url=URL.createObjectURL(new Blob([csv(context,[{key:'time',label:'Thời gian nguồn'},{key:'actual',label:'Lượt điều động xe thực tế'},{key:'prediction',label:'Prophet '+profile.horizon+'h'}])],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`ems-nhu-cau-${month}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);},saveSettings,restoreSettings,initialScreen:['tongquan','dubao','kehoach','chiphi','danhgia','lichsu','caidat'].includes(initialScreen)?initialScreen:null};
-  $('#chart-danhgia').setAttribute('aria-label',`Thực tế và dự báo Prophet ngày ${date(day)}`);
+    download(){const url=URL.createObjectURL(new Blob([csv(context,[{key:'time',label:'Thời gian nguồn'},{key:'actual',label:'Lượt điều động xe thực tế'},{key:'prediction',label:profile.name+' '+profile.horizon+'h'}])],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`ems-nhu-cau-${month}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);},saveSettings,restoreSettings,initialScreen:['tongquan','dubao','daily','kehoach','chiphi','danhgia','lichsu','caidat'].includes(initialScreen)?initialScreen:null};
+  $('#chart-danhgia').setAttribute('aria-label',`Thực tế và dự báo ${profile.name} ngày ${date(day)}`);
   $('#chart-sailech').setAttribute('aria-label',`Sai lệch dự báo trừ thực tế theo giờ ngày ${date(day)}`);
   $('#chart-lichsu').setAttribute('aria-label',`Lượt điều động xe thực tế theo ngày ${range}`);
-  restoreSettings();await import('./template-runtime.mjs');document.body.classList.add('data-ready');
+  enhanceOperations(dataset,key,day);restoreSettings();await import('./template-runtime.mjs');installReferenceMotion();installZenlessShell();installLiveForecast();document.body.classList.add('data-ready');
 }
 const status=document.createElement('p');status.className='data-loading';status.setAttribute('role','status');status.textContent='Đang tải dữ liệu thật…';document.body.append(status);
 start().catch(error=>{status.textContent=error.message;});

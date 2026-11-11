@@ -9,7 +9,7 @@
 
 
 
-<link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/template-bindings.css">
+<link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/template-bindings.css"><link rel="stylesheet" href="/operations.css"><link rel="stylesheet" href="/reference-polish.css"><link rel="stylesheet" href="/zenless.css">
 </head>
 <body>
 
@@ -74,6 +74,7 @@
         <svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>
         Đánh giá mô hình
       </button>
+      <button data-screen="daily">Dự báo 7 ngày</button>
       <button data-screen="lichsu">
         <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5.5" rx="7" ry="2.8"/><path d="M5 5.5v13c0 1.6 3.1 2.8 7 2.8s7-1.2 7-2.8v-13"/><path d="M5 12c0 1.6 3.1 2.8 7 2.8s7-1.2 7-2.8"/></svg>
         Dữ liệu lịch sử
@@ -125,6 +126,13 @@
     </header>
 
     <main id="screens">
+    <div class="page" id="screen-daily">
+      <div class="intro"><h1>Dự báo 7 ngày</h1><p>Lượt điều động xe MEDIC tại San Francisco · Cập nhật tự động mỗi ngày.</p></div>
+      <section class="card live-status"><h2>Dữ liệu mới, dự báo mới</h2><p id="live-status" role="status">Đang tải dự báo cập nhật…</p><p id="live-source" class="sub"></p><button type="button" class="btn-ghost" id="live-refresh">Tải lại kết quả</button></section>
+      <div class="live-days" id="live-days" aria-label="Chọn ngày dự báo"></div>
+      <section class="card" id="live-hourly" hidden><h2 id="live-day-title"></h2><p class="sub">Ước tính cả ngày theo giờ địa phương San Francisco. Chọn một ngày ở trên để xem chi tiết.</p><div id="live-chart" class="live-chart"></div><details class="live-table"><summary>Xem số liệu từng giờ</summary><div id="live-hour-table"></div></details></section>
+      <section class="card"><h2>Cách đọc dự báo</h2><p>Mỗi bản ghi điều động MEDIC có RowID riêng được tính một lượt, gom theo giờ điều động. Một cuộc gọi điều hai xe được tính hai lượt; một xe có thể được điều nhiều lần. Lượt điều động không đồng nghĩa với số xe cần trực. Dữ liệu nguồn có thể đến trễ hoặc được điều chỉnh.</p><p class="sub" id="live-model">Dự báo tự động được lưu riêng với thí nghiệm lịch sử. Kết quả tương lai chưa có số thực tế để tính sai số.</p><p class="sub">Ngày đổi giờ mùa hè dùng 24 ô giờ mô hình; không quy đổi thành 24 giờ vận hành thực tế. Đây là ước tính nghiên cứu hỗ trợ lập kế hoạch.</p><p class="sub"><a href="https://data.sf.gov/d/nuek-vuh3" target="_blank" rel="noopener">Nguồn dữ liệu mở DataSF</a> · Lịch cập nhật: 07:00 mỗi ngày, giờ San Francisco.</p></section>
+    </div>
     <div class="page active" id="screen-tongquan">
 
       <!-- Banner trạng thái dữ liệu -->

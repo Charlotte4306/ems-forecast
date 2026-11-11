@@ -21,7 +21,7 @@ class ServerTests(unittest.TestCase):
         (self.root / "secret.txt").write_text("private", encoding="utf-8")
         self.dataset = self.root / "dataset.json"
         self.dataset.write_text(json.dumps({"schemaVersion": 1, "rows": [{"actual": 1}]}), encoding="utf-8")
-        self.server = ThreadingHTTPServer(("127.0.0.1", 0), partial(Handler, web_root=self.root / "web", dataset=self.dataset))
+        self.server = ThreadingHTTPServer(("127.0.0.1", 0), partial(Handler, web_root=self.root / "web", dataset=self.dataset, live_dir=self.root / 'live'))
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
         self.base = f"http://127.0.0.1:{self.server.server_port}"
@@ -41,6 +41,26 @@ class ServerTests(unittest.TestCase):
         with urlopen(Request(self.base + "/", method="HEAD")) as response:
             self.assertEqual(response.read(), b"")
             self.assertGreater(int(response.headers["Content-Length"]), 0)
+
+    def test_direct_screen_routes_serve_the_app(self):
+        for route in ('/overview', '/forecast', '/fleet-plan', '/scenario-costs',
+                      '/model-evaluation', '/history', '/settings', '/forecast/', '/daily-forecast'):
+            with urlopen(self.base + route + '?profile=prophet-h24') as response:
+                self.assertEqual(response.status, 200)
+                self.assertEqual(response.read(), b'<h1>EMS</h1>')
+
+    def test_live_api_is_separate_and_missing_snapshot_returns_503(self):
+        with self.assertRaises(HTTPError) as result:
+            urlopen(self.base + '/api/live-forecast')
+        self.assertEqual(result.exception.code, 503)
+        result.exception.close()
+        (self.root/'live').mkdir()
+        (self.root/'live/forecast.json').write_text(json.dumps({'schemaVersion':1, 'target':'medic-dispatches', 'unit':'dispatches', 'rows':[{'prediction':1}]*168}), encoding='utf-8')
+        (self.root/'live/status.json').write_text(json.dumps({'ok':False}), encoding='utf-8')
+        with urlopen(self.base + '/api/live-forecast') as response:
+            value = json.load(response)
+        self.assertEqual(len(value['rows']), 168)
+        self.assertFalse(value['refresh']['ok'])
 
     def test_no_source_or_traversal_access(self):
         for route in ("/../secret.txt", "/%2e%2e/secret.txt", "/ems/models/lstm/train.py"):

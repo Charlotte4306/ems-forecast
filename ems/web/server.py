@@ -3,6 +3,7 @@ import argparse
 from functools import partial
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+import os
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
@@ -10,6 +11,8 @@ from ems.paths import ROOT
 
 WEB_ROOT = ROOT / "web"
 DATASET = ROOT / "outputs/web/dataset.json"
+PAGE_ROUTES = {"/", "/overview", "/forecast", "/fleet-plan", "/scenario-costs",
+               "/model-evaluation", "/history", "/settings", "/daily-forecast"}
 
 
 def read_dataset(path=DATASET):
@@ -21,9 +24,10 @@ def read_dataset(path=DATASET):
 
 
 class Handler(BaseHTTPRequestHandler):
-    def __init__(self, *args, web_root=WEB_ROOT, dataset=DATASET, **kwargs):
+    def __init__(self, *args, web_root=WEB_ROOT, dataset=DATASET, live_dir=None, **kwargs):
         self.web_root = Path(web_root).resolve()
         self.dataset = Path(dataset)
+        self.live_dir = Path(live_dir or os.environ.get('EMS_LIVE_DIR', ROOT / 'outputs/live'))
         super().__init__(*args, **kwargs)
 
     def respond(self, status, body, content_type):
@@ -42,6 +46,18 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         route = unquote(urlsplit(self.path).path)
+        if route == "/api/live-forecast":
+            try:
+                value = json.loads((self.live_dir / 'forecast.json').read_text(encoding='utf-8'))
+                if value.get('schemaVersion') != 1 or value.get('target') != 'medic-dispatches' or value.get('unit') != 'dispatches' or len(value.get('rows', [])) != 168:
+                    raise ValueError('Invalid live forecast')
+                try:
+                    value['refresh'] = json.loads((self.live_dir / 'status.json').read_text(encoding='utf-8'))
+                except (OSError, ValueError):
+                    value['refresh'] = None
+                return self.respond(200, json.dumps(value, ensure_ascii=False, allow_nan=False).encode(), "application/json; charset=utf-8")
+            except (OSError, ValueError):
+                return self.respond(503, b'{"error":"Live forecast not available yet"}', "application/json")
         if route == "/health":
             try:
                 read_dataset(self.dataset)
@@ -54,7 +70,7 @@ class Handler(BaseHTTPRequestHandler):
             except (OSError, ValueError):
                 return self.respond(503, b'{"error":"Run python -m ems.web.export to prepare the demo dataset."}', "application/json")
             return self.respond(200, body, "application/json; charset=utf-8")
-        target = (self.web_root / ("index.html" if route == "/" else route.lstrip("/"))).resolve()
+        target = (self.web_root / ("index.html" if route.rstrip("/") in PAGE_ROUTES or route == "/" else route.lstrip("/"))).resolve()
         if not target.is_relative_to(self.web_root) or not target.is_file():
             return self.respond(404, b"Not found", "text/plain")
         content_types = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",

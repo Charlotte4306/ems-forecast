@@ -31,18 +31,25 @@ def verify():
         for asset in ('index.html', 'styles.css', 'template-bindings.css', 'app.mjs',
                       'template-runtime.mjs', 'dashboard.mjs', 'analysis.mjs', 'assets/fonts.css',
                       'assets/ibm-plex-sans-400.ttf', 'assets/ibm-plex-sans-500.ttf',
-                      'assets/ibm-plex-sans-600.ttf'):
+                      'assets/ibm-plex-sans-600.ttf', 'zenless.css', 'zenless.mjs',
+                      'routes.mjs', 'live.mjs', 'operations.css', 'operations.mjs',
+                      'assets/zenless-tt-hoves-pro-compact-bold.woff2',
+                      'assets/zenless-impact.ttf'):
             with urlopen(base + '/' + asset) as response:
                 assert response.read() == (ROOT / 'web' / asset).read_bytes(), asset
                 if asset.endswith('.ttf'):
                     assert response.headers['Content-Type'] == 'font/ttf'
+        for route in ('overview', 'forecast', 'fleet-plan', 'scenario-costs',
+                      'model-evaluation', 'history', 'settings', 'daily-forecast'):
+            with urlopen(base + '/' + route) as response:
+                assert response.read() == (ROOT / 'web/index.html').read_bytes(), route
         with urlopen(base + '/health') as response:
             assert json.load(response)['status'] == 'ok'
     finally:
         server.shutdown()
         server.server_close()
         thread.join()
-    print('Verified release:', manifest['release'], '2 x 6796 hours, all assets and fonts')
+    print('Verified release:', manifest['release'], 'forecast profiles, screen routes, assets and fonts')
 
 
 if __name__ == '__main__':

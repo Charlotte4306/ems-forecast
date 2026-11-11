@@ -1,3 +1,6 @@
 @font-face{font-family:"IBM Plex Sans";font-style:normal;font-weight:400;font-display:swap;src:url("/assets/ibm-plex-sans-400.ttf") format("truetype");}
 @font-face{font-family:"IBM Plex Sans";font-style:normal;font-weight:500;font-display:swap;src:url("/assets/ibm-plex-sans-500.ttf") format("truetype");}
 @font-face{font-family:"IBM Plex Sans";font-style:normal;font-weight:600;font-display:swap;src:url("/assets/ibm-plex-sans-600.ttf") format("truetype");}
+/* Font files and language roles verified against the official Zenless vi-vn stylesheet. */
+@font-face{font-family:"Zenless Hoves";font-style:normal;font-weight:700;font-display:swap;src:url("/assets/zenless-tt-hoves-pro-compact-bold.woff2") format("woff2");}
+@font-face{font-family:"Zenless Impact";font-style:normal;font-weight:400;font-display:swap;src:url("/assets/zenless-impact.ttf") format("truetype");}

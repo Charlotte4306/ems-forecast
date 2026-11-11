@@ -1,4 +1,4 @@
-
+import {screenFromLocation,screenUrl} from './routes.mjs';
 (function(){
   "use strict";
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.body.classList.contains('reduce-motion');
@@ -121,7 +121,7 @@
   });
 
   /* ---------- Chuyển màn bằng sidebar ---------- */
-  var titles = {tongquan:'Tổng quan', dubao:'Dự báo nhu cầu', kehoach:'Kế hoạch xe', chiphi:'Chi phí kịch bản', danhgia:'Đánh giá mô hình', lichsu:'Dữ liệu lịch sử', caidat:'Cài đặt'};
+  var titles = {tongquan:'Tổng quan', dubao:'Dự báo nhu cầu', daily:'Dự báo 7 ngày', kehoach:'Kế hoạch xe', chiphi:'Chi phí kịch bản', danhgia:'Đánh giá mô hình', lichsu:'Dữ liệu lịch sử', caidat:'Cài đặt'};
   var crumb = document.getElementById('crumb');
   var topFilters = document.getElementById('topbar-filters');
   function showScreen(key){
@@ -133,15 +133,18 @@
     });
     document.querySelectorAll('#screens .page').forEach(function(p){ p.classList.toggle('active', p.id === 'screen-' + key); });
     if(crumb) crumb.textContent = titles[key] || '';
-    if(topFilters) topFilters.style.display = (key === 'caidat') ? 'none' : '';
+    if(topFilters) topFilters.style.display = (key === 'caidat' || key === 'daily') ? 'none' : '';
+    document.querySelectorAll('.ops-flow,.ops-controls,.ops-controls + .sub').forEach(function(node){node.hidden=key==='daily';});
     window.scrollTo(0, 0);
   }
   document.querySelectorAll('.nav button[data-screen]').forEach(function(b){
-    b.addEventListener('click', function(){ showScreen(b.getAttribute('data-screen')); history.replaceState(null, '', '#' + b.getAttribute('data-screen')); });
+    b.addEventListener('click', function(){ var key=b.getAttribute('data-screen');showScreen(key);var url=screenUrl(key,location);if(url!==location.pathname+location.search)history.pushState(null,'',url); });
   });
   if(window.EMS.initialScreen) showScreen(window.EMS.initialScreen);
+  history.replaceState(null,'',screenUrl(screenFromLocation(location),location));
+  window.addEventListener('popstate',function(){showScreen(screenFromLocation(location));});
   var gotoHist = document.getElementById('btn-goto-history');
-  if(gotoHist) gotoHist.addEventListener('click', function(){ showScreen('lichsu'); });
+  if(gotoHist) gotoHist.addEventListener('click', function(){ document.querySelector('.nav button[data-screen="lichsu"]').click(); });
 
   /* ---------- Vẽ biểu đồ dùng chung (khung 1120×250 như Figma) ---------- */
   function drawChart(svgId, cfg){
