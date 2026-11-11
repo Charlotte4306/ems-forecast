@@ -1,8 +1,8 @@
 """Execute the existing capacity notebook headlessly, without a Jupyter kernel.
 
-The notebook is the source of truth for this synchronization step. Its input
-paths, formulas, calibration and test-selection policy are deliberately kept
-unchanged; this runner does not correct their methodological limitations.
+The notebook is the shared workflow for the CLI and interactive research.
+It evaluates fixed policies on saved forecasts; this runner does not train
+models or optimize a policy on the test set.
 Only trusted repository notebooks should be passed to this Python API.
 """
 import json

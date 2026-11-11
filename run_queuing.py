@@ -5,7 +5,7 @@
 
 Uses the notebook's saved forecasts/checkpoint, busy-time carryover, shifts,
 quantile analysis, and cost scenarios. No model training or Jupyter server.
-The notebook's existing methodological limitations remain unchanged.
+See reports/medic_busy_time.md for service-duration provenance and limits.
 """
 import argparse
 from pathlib import Path

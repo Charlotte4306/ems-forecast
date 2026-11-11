@@ -48,8 +48,8 @@ def parse_predictions(raw, horizon):
 
 def prepare(destination, prophet24_ref=None):
     destination = Path(destination)
-    # Preserve the legacy export for existing consumers; the new UI uses profiles.
-    value = json.loads(destination.read_text(encoding="utf-8"))
+    # Initialize from current forecast artifacts; an old LSTM export is not required.
+    value = json.loads(destination.read_text(encoding="utf-8")) if destination.exists() else {"schemaVersion": 1}
     path = ROOT / "outputs/prophet/test_predictions.csv"
     raw = path.read_text(encoding="utf-8")
     profiles = {"prophet_h1": {"name": "Prophet", "horizon": 1,
@@ -69,6 +69,12 @@ def prepare(destination, prophet24_ref=None):
             "source": artifact, "revision": revision,
             "sha256": hashlib.sha256(raw24.encode()).hexdigest(), "rows": rows24}
     value["profiles"] = profiles
+    value.pop("rows", None)  # Superseded two-model export; the UI uses profiles.
+    rows = profiles["prophet_h1"]["rows"]
+    value["metadata"] = {"mode": "historical-evaluation", "region": "San Francisco",
+        "target": "medic-dispatches", "timeField": "received_dttm", "unit": "dispatches",
+        "count": len(rows), "start": rows[0]["time"], "end": rows[-1]["time"]}
+    destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(value, ensure_ascii=False, allow_nan=False, separators=(",", ":")), encoding="utf-8")
     print({key: len(profile["rows"]) for key, profile in profiles.items()})
 

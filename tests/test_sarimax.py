@@ -1,4 +1,4 @@
-"""Regression coverage for SARIMAX state updates, artifacts and capacity costs."""
+"""Regression coverage for SARIMAX state updates, artifacts and forecast reports."""
 import importlib
 import io
 from pathlib import Path
@@ -13,8 +13,8 @@ import pandas as pd
 from statsmodels.tsa.statespace.sarimax import SARIMAX, SARIMAXResults
 
 from ems.models.sarimax.model import baselines, make_exog, metrics, rolling_forecast
-from ems.models.sarimax.capacity_planning import capacity_summary, read_predictions, run_capacity
-from ems.paths import CHECKPOINT_DIR, OUTPUT_DIR
+from ems.models.sarimax.evaluate import read_predictions, evaluate_saved
+from ems.paths import OUTPUT_DIR
 
 
 class SarimaxTests(unittest.TestCase):
@@ -29,7 +29,7 @@ class SarimaxTests(unittest.TestCase):
         with patch("pandas.read_csv", side_effect=AssertionError("import read data")):
             with redirect_stdout(io.StringIO()) as output:
                 importlib.reload(importlib.import_module("ems.models.sarimax.run_sarimax"))
-                importlib.reload(importlib.import_module("ems.models.sarimax.capacity_planning"))
+                importlib.reload(importlib.import_module("ems.models.sarimax.evaluate"))
         self.assertEqual(output.getvalue(), "")
 
     def test_calendar_schema_and_holidays_outside_original_year_range(self):
@@ -81,55 +81,62 @@ class SarimaxTests(unittest.TestCase):
         self.assertEqual(metrics(frame)["WAPE (%)"], 40)
         self.assertIsNone(metrics(frame.assign(actual=0))["WAPE (%)"])
 
-    def test_original_capacity_costs_and_invalid_inputs(self):
-        # Evaluate the committed artifact using independently calculated costs.
+    def test_saved_predictions_reject_misaligned_targets_and_invalid_intervals(self):
         from ems.models.sarimax.model import load_series
-        splits = load_series()
-        frame = read_predictions(OUTPUT_DIR / "sarimax/pred_sarimax.csv", splits["test"])
-        history = pd.concat([splits["train"], splits["val"]]).iloc[-8760:]
-        baseline = baselines(history, frame.actual)
-        summary, _ = capacity_summary(frame, baseline)
-        # Compute from committed predictions instead of hardcoding a fitted model's metrics.
-        assigned = np.ceil(frame.pred / 3)
-        needed = np.ceil(frame.actual / 3)
-        expected = ((assigned - needed).clip(lower=0) * 30 + (needed - assigned).clip(lower=0) * 75).sum()
-        self.assertEqual(summary.iloc[2]["TỔNG CHI PHÍ ($)"], expected)
-        with self.assertRaises(ValueError):
-            capacity_summary(frame, baseline, mu=0)
+        actual = load_series()["test"]
+        frame = read_predictions(OUTPUT_DIR / "sarimax/norefit/pred_sarimax.csv", actual)
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "bad.csv"
-            frame.assign(hi=frame.lo - 1).to_csv(path)
-            with self.assertRaises(ValueError):
-                read_predictions(path, splits["test"])
+            for changed in (frame.assign(hi=frame.lo - 1), frame.assign(actual=frame.actual + 1),
+                            frame.assign(pred=np.nan), frame.iloc[1:]):
+                changed.to_csv(path)
+                with self.assertRaises(ValueError):
+                    read_predictions(path, actual)
 
-    def test_reports_from_other_working_directory(self):
+    def test_reports_from_other_working_directory_match_saved_forecasts(self):
         import os
         previous = Path.cwd()
         with tempfile.TemporaryDirectory() as directory:
             try:
                 os.chdir(directory)
-                with redirect_stdout(io.StringIO()):
-                    run_capacity(output_dir=Path(directory) / "reports")
+                report = evaluate_saved(output_dir=Path(directory) / "reports")
             finally:
                 os.chdir(previous)
-            for name in ["capacity_metadata.json", "staffing_schedule.csv", "capacity_cost_evaluation.csv",
-                         "figures/hourly_mae.png", "figures/cost_comparison.png"]:
+            saved = json.loads((OUTPUT_DIR / "sarimax/norefit/metrics.json").read_text(encoding="utf-8"))
+            self.assertEqual(report["rows"], 6796)
+            self.assertEqual(report["metrics"], saved["test_metrics"]["all_test"])
+            for name in ["forecast_evaluation.json", "figures/hourly_mae.png", "figures/forecast_sample_week.png"]:
                 self.assertTrue((Path(directory) / "reports" / name).is_file())
 
     def test_saved_checkpoint_forecasts_the_next_unseen_block(self):
-        from ems.models.sarimax.model import load_series
-        checkpoint = CHECKPOINT_DIR / "sarimax/best_model.pkl"
-        if not checkpoint.exists():
-            self.skipTest("Run SARIMAX to create its checkpoint before checking serialization")
-        metadata = json.loads((checkpoint.parent / "metadata.json").read_text(encoding="utf-8"))
-        test = load_series()["test"].iloc[:24]
-        fitted = SARIMAXResults.load(checkpoint)
-        forecast = fitted.get_forecast(len(test), exog=make_exog(test.index, metadata["selected"]["K"]))
-        self.assertEqual(pd.Timestamp(metadata["final_fit"]["end"]) + pd.Timedelta(hours=1), test.index[0])
-        self.assertEqual(fitted.nobs, metadata["final_fit"]["rows"])
-        self.assertTrue(forecast.predicted_mean.index.equals(test.index))
-        self.assertTrue(np.isfinite(forecast.predicted_mean).all())
-        self.assertTrue(metadata["converged"])
+        # Exercise serialization independently of the removed 2025-refitted checkpoint.
+        fitted = SARIMAX(self.history, exog=make_exog(self.history.index, 1),
+                         order=(1, 0, 0), trend="c").fit(disp=False)
+        future = make_exog(self.actual.index[:24], 1)
+        expected = fitted.get_forecast(24, exog=future).predicted_mean
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "model.pkl"
+            fitted.save(path)
+            restored = SARIMAXResults.load(path)
+            result = restored.get_forecast(24, exog=future).predicted_mean
+        pd.testing.assert_series_equal(result, expected)
+        self.assertTrue(result.index.equals(self.actual.index[:24]))
+
+    def test_default_cli_uses_full_train_without_parameter_refit(self):
+        from ems.models.sarimax.run_sarimax import main
+        with patch("ems.models.sarimax.run_sarimax.run_experiment") as run:
+            main([])
+        args, kwargs = run.call_args
+        self.assertEqual(args[3:5], (52440, 24))
+        self.assertFalse(kwargs["refit"])
+
+    def test_refit_cli_cannot_overwrite_canonical_comparison(self):
+        from contextlib import redirect_stderr
+        from ems.models.sarimax.run_sarimax import main
+        with patch("ems.models.sarimax.run_sarimax.run_experiment") as run:
+            with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                main(["--refit"])
+        run.assert_not_called()
 
 
 if __name__ == "__main__":

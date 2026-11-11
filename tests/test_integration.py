@@ -33,7 +33,7 @@ class IntegrationTests(unittest.TestCase):
         self.assertEqual(X_seq.shape, (2, 24, N_FEATURES))
         np.testing.assert_array_equal(y_seq, y[24:])
         model = build_model("vanilla")
-        load_checkpoint(model, "vanilla_seq24")
+        load_checkpoint(model, "vanilla_1h_rolling")
         model.eval()
         with torch.no_grad():
             result = model(torch.from_numpy(X_seq).to(DEVICE))

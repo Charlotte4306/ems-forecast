@@ -1,6 +1,6 @@
 # Automatic forecast: canonical target and operation
 
-Current release: `20261111-190149-daily-forecast`; archive SHA-256 `96c1b0b83ae12dfc4b42fd8d6eb6892ceb6c2f22000a4d76132dca58d2ce95ee`. Real worker rerun succeeded and public API reports received-time dispatch forecasts: 168 hours/seven days, observed through 2026-11-10 23:00 San Francisco. Its separate live-model holdout MAE is 3.232 dispatches/hour. The daily timer remains enabled. Public HTML/JS matched local files; Python/JS tests passed. These results supersede the earlier dispatch-time automatic forecast.
+Last verified deployment (2026-11-12; this is an audit record, not a live status probe): `20261111-190149-daily-forecast`; archive SHA-256 `96c1b0b83ae12dfc4b42fd8d6eb6892ceb6c2f22000a4d76132dca58d2ce95ee`. Real worker rerun succeeded and public API reports received-time dispatch forecasts: 168 hours/seven days, observed through 2026-11-10 23:00 San Francisco. Its separate live-model holdout MAE is 3.232 dispatches/hour. The daily timer was enabled at that check. Public HTML/JS matched local files; Python/JS tests passed. These results supersede the earlier dispatch-time automatic forecast.
 
 ## Corrected definition (2026-11-12)
 

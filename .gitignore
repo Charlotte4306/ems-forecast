@@ -3,3 +3,6 @@ __pycache__/
 *.py[cod]
 .ipynb_checkpoints/
 outputs/live/
+deploy/*.tar.gz
+deploy/release-manifest.json
+outputs/prophet/day_ahead_24h/val_smoke/

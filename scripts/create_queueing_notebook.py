@@ -27,7 +27,7 @@ md(r"""
 | 1 | Nạp **dự báo 24 giờ tới** (day-ahead) của LSTM 24h-block, SARIMAX và Prophet 24h, cùng baseline profile lịch sử 2025. Dự báo 1 giờ tới **không** dùng được để xếp ca trước. |
 | 2 | Tham số thời gian bận từ dữ liệu thô 2025: $E[S]$ = 63,38 phút/lượt xe và **kernel lan tỏa** (xe bận xuyên giờ). |
 | 3 | **Khối lượng công việc** $W(h) = \sum_k \hat{\lambda}(h-k)\,p_k$ và số xe $s(h) = \lceil W(h)/\rho_{max} \rceil$, với $\rho_{max}$ = 75% / 80% / 85% (kịch bản, chưa phải tiêu chuẩn). |
-| 4 | **Số xe thực cần** $s^*(h)$: đưa số lượt điều xe **thực tế 2026** qua đúng công thức trên → thước đo chung để chấm mọi kế hoạch. |
+| 4 | **Nhu cầu xe đối chiếu theo mô hình** $s^*(h)$: đưa số lượt điều xe **thực tế 2026** qua đúng công thức trên → thước đo chung để chấm mọi kế hoạch. |
 | 5 | Chốt trước hai phương án chính: **Trung bình** và **P90**. P50–P95 chỉ là khảo sát hậu kiểm, không chọn phân vị tối ưu trên test. |
 | 6 | Quy đổi sang **ca trực** (3 ca × 8h, 2 ca × 12h), mỗi ca lấy mức cao nhất trong ca. |
 | 7 | Đánh giá: xe-giờ bố trí, xe-giờ thiếu/thừa, % giờ và % ca thiếu xe, chi phí tương đối. |
@@ -40,15 +40,15 @@ md(r"""
 
 | Thuật ngữ | Nghĩa trong bài toán xe cứu thương | Ví dụ |
 |---|---|---|
-| **Lượt điều xe** $\lambda(h)$ | Số lần một xe MEDIC được điều đi trong giờ $h$ (cột `call_count`) | Trung bình 2026 ≈ 11–12 lượt/giờ |
+| **Lượt điều xe** $\lambda(h)$ | Số lượt đáp ứng xe MEDIC gắn với giờ nhận cuộc gọi $h$ (cột `call_count`) | Trung bình 2026 ≈ 11–12 lượt/giờ |
 | **Thời gian bận** $E[S]$ | Từ lúc xe được điều đến lúc xe sẵn sàng nhận ca mới | 63,38 phút ≈ 1 giờ |
 | **Khối lượng công việc** $W(h)$ | **Số xe đang bận trung bình** trong giờ $h$ | $W = 12$: tại một thời điểm bất kỳ trong giờ đó, trung bình 12 xe đang làm nhiệm vụ |
 | **Mức bận tối đa** $\rho_{max}$ | Mỗi xe chỉ được bận tối đa bao nhiêu % thời gian; phần còn lại là **dự phòng** cho lúc cuộc gọi dồn dập | $\rho = 80\%$, $W = 12$ → cần $12/0{,}8 = 15$ xe (3 xe dự phòng) |
-| **Số xe thực cần** $s^*(h)$ | Số xe *lẽ ra* phải có nếu biết trước chính xác nhu cầu (tính từ số thực tế 2026) | Dùng làm "đáp án" để chấm kế hoạch |
+| **Nhu cầu xe đối chiếu theo mô hình** $s^*(h)$ | Số xe *lẽ ra* phải có nếu biết trước chính xác nhu cầu (tính từ số thực tế 2026) | Dùng làm "đáp án" để chấm kế hoạch |
 | **Kế hoạch** $s(h)$ | Số xe xếp **trước** dựa trên dự báo | |
 | **Xe-giờ** | 1 xe trực trong 1 giờ — đơn vị đo nguồn lực | 1 ca 8h × 20 xe = 160 xe-giờ |
-| **Xe-giờ thiếu** | Tổng $(s^* - s)$ ở những giờ kế hoạch **ít hơn** thực cần → **rủi ro**: cuộc gọi phải chờ, phải điều xe ở xa | |
-| **Xe-giờ thừa** | Tổng $(s - s^*)$ ở những giờ kế hoạch **nhiều hơn** thực cần → **lãng phí** | |
+| **Xe-giờ thiếu** | Tổng $(s^* - s)$ ở những giờ kế hoạch **ít hơn** thực cần → thiếu so với mức đối chiếu của kịch bản; chưa đo thời gian chờ hoặc vị trí xe | |
+| **Xe-giờ thừa** | Tổng $(s - s^*)$ ở những giờ kế hoạch **nhiều hơn** thực cần → **dư so với mức đối chiếu** | |
 | **Phân vị** $P_q$ | Mức dự báo mà số thực tế chỉ vượt quá trong $(1-q)$ số giờ | P90: chỉ khoảng 10% số giờ thực tế cao hơn mức này |
 | **Tỷ lệ chi phí** $r$ | 1 xe-giờ thiếu "đắt" bằng bao nhiêu xe-giờ thừa | $r = 3$: thiếu 1 xe-giờ tệ như thừa 3 xe-giờ |
 """)
@@ -249,7 +249,7 @@ md(r"""
 |---|---|---|
 | **MAE** | Trung bình mỗi giờ, dự báo lệch bao nhiêu lượt điều xe | MAE = 3 → mỗi giờ lệch khoảng 3 lượt ≈ 3 xe-giờ bận. **Càng nhỏ càng tốt** |
 | **RMSE** | Giống MAE nhưng phạt nặng các giờ lệch lớn | RMSE cao hơn MAE nhiều → có những giờ lệch rất mạnh (đột biến) |
-| **MAPE (%)** | Sai số tính theo % của giá trị thực | Bị đẩy cao ở các giờ đêm ít cuộc gọi (chia cho số nhỏ) — không nên dùng một mình |
+| **MAPE (%)** | Sai số tính theo % của giá trị thực | Bị đẩy cao ở các giờ đêm ít lượt điều động (chia cho số nhỏ) — không nên dùng một mình |
 | **R2** | Tỷ lệ dao động mà mô hình giải thích được (0–1) | 0,4 → 60% dao động còn lại là "nhiễu" → chính là lý do cần $\rho$ và cận trên |
 | **Độ phủ P90 (%)** | % số giờ mà thực tế **≤** cận trên P90 | Lý tưởng ≈ 90%. Thấp hơn (ví dụ 87%) → cận trên hơi "lạc quan", kế hoạch P90 sẽ thiếu xe nhiều hơn dự kiến một chút |
 
@@ -269,7 +269,7 @@ Cách cũ ($a = \hat{\lambda} \times E[S]$) dồn toàn bộ thời gian bận v
 """)
 
 code(r"""
-params = estimate_service_params(raw_df=None)   # mặc định = ước lượng raw 2025
+params = estimate_service_params()   # mặc định = ước lượng raw 2025
 kernel = BUSY_KERNEL_2025
 print(f"\nKernel p_k (xe-giờ / lượt điều xe): {np.round(kernel, 4)}")
 print(f"Tổng kernel = {kernel.sum():.4f} xe-giờ = {kernel.sum() * 60:.2f} phút "
@@ -304,7 +304,7 @@ md(r"""
 md(r"""
 ## Bước 3: Số xe thực cần và kế hoạch theo giờ
 
-* **Số xe thực cần** $s^*(h) = \lceil W^*(h) / \rho_{max} \rceil$, với $W^*$ tính từ số lượt điều xe **thực tế** 2026. Đây là thước đo chung để chấm mọi kế hoạch.
+* **Nhu cầu xe đối chiếu theo mô hình** $s^*(h) = \lceil W^*(h) / \rho_{max} \rceil$, với $W^*$ tính từ số lượt điều xe **thực tế** 2026. Đây là thước đo chung để chấm mọi kế hoạch.
 * **Kế hoạch** $s(h) = \lceil W(h) / \rho_{max} \rceil$, với $W$ tính từ **dự báo** (trung bình hoặc P90).
 * Phần bận tràn từ cuối năm 2025 sang những giờ đầu 2026 dùng số thực tế 2025 (đã biết khi lập kế hoạch).
 """)
@@ -351,7 +351,7 @@ Mỗi dòng là một **cách xếp xe**: nguồn dự báo × dựa trên dự 
 | Cột | Ý nghĩa |
 |---|---|
 | **Xe-giờ bố trí** | Tổng nguồn lực bỏ ra cả giai đoạn test. Chia cho số giờ (6.796) = số xe trung bình mỗi giờ |
-| **Xe-giờ thiếu** | Tổng số "xe còn thiếu" cộng dồn qua các giờ kế hoạch thấp hơn thực cần → **rủi ro cho bệnh nhân** |
+| **Xe-giờ thiếu** | Tổng số "xe còn thiếu" cộng dồn qua các giờ kế hoạch thấp hơn thực cần → thiếu so với nhu cầu đối chiếu của kịch bản |
 | **Xe-giờ thừa** | Tổng số xe dư cộng dồn → **chi phí lãng phí** |
 | **% giờ thiếu xe** | Tỷ lệ số giờ có ít nhất 1 xe bị thiếu |
 | **Thiếu TB khi thiếu (xe)** | Khi đã thiếu thì thường thiếu mấy xe |
@@ -544,7 +544,7 @@ display(size)
 
 md(r"""
 #### 🔎 Cách đọc hai bảng trên
-* **Đọc theo dòng:** đi từ P50 xuống P95, % ca thiếu xe giảm dần, còn số xe phải bố trí tăng dần. Đây là **đường đánh đổi** giữa an toàn và chi phí.
+* **Đọc theo dòng:** đi từ P50 xuống P95, % ca thiếu xe giảm dần, còn số xe phải bố trí tăng dần. Đây là **đường đánh đổi** giữa mức thiếu theo mô hình và chi phí kịch bản.
 * **Giới hạn:** đây là hậu kiểm. Muốn chọn phân vị theo mức rủi ro hoặc chi phí cần giai đoạn chọn chính sách riêng, không dùng chính test này.
 * **Đọc theo cột:** ở cùng một phân vị, các nguồn dự báo cho kết quả gần như nhau.
 """)
@@ -577,7 +577,7 @@ fig.tight_layout(); fig.savefig(OUT_DIR / "tradeoff_quantiles.png", dpi=150, bbo
 
 md(r"""
 #### 🔎 Cách đọc biểu đồ đánh đổi
-* **Trục ngang:** tổng nguồn lực bỏ ra (xe-giờ), đi sang phải là tốn kém hơn. **Trục dọc:** tổng xe-giờ thiếu, đi xuống là an toàn hơn.
+* **Trục ngang:** tổng nguồn lực bỏ ra (xe-giờ), đi sang phải là tốn kém hơn. **Trục dọc:** tổng xe-giờ thiếu, đi xuống là ít thiếu theo mô hình hơn.
 * **Mỗi đường** là một nguồn dự báo; **mỗi điểm** trên đường là một phân vị (P50 ở đầu trái-trên, P95 ở cuối phải-dưới).
 * Đường **nằm thấp hơn và lệch trái hơn** là tốt hơn: cùng chi phí thì ít thiếu xe hơn.
 * **Các đường gần như chồng lên nhau** → các mô hình tương đương nhau khi dùng để xếp ca.
@@ -706,8 +706,8 @@ md(r"""
   * **ρ ≤ 75/80/85%:** số xe $= W/\rho$. Đơn giản, dự phòng tỷ lệ thuận với $W$.
   * **Erlang B ≤ 5%:** chọn số xe nhỏ nhất sao cho xác suất **tất cả xe đều bận** khi có cuộc gọi mới ≤ 5%. Mô hình này tính cả dao động ngẫu nhiên của cuộc gọi.
   * **Poisson 98%:** đủ xe trong 98% tình huống ngẫu nhiên. Đây là tiêu chí khắt khe nhất.
-* **Erlang B ≈ ρ ≤ 80%** ở đội xe cỡ 20–30 xe → quy tắc $\rho$ = 80% đang cho mức an toàn tương đương xác suất hết xe khoảng 5%.
-* Riêng **ca đêm** (đội xe nhỏ), Erlang B đòi tỷ lệ dự phòng cao hơn $\rho$ → nếu muốn chặt chẽ hơn, có thể dùng Erlang B cho ca đêm.
+* Không suy ra tương đương giữa mức $\\rho$ và xác suất hết xe từ bảng này. Erlang B giả định hệ M/M/s/s dừng; nhu cầu EMS biến thiên và thời gian bận thực tế chưa được kiểm định theo giả định đó.
+* Kết quả Erlang B/Poisson chỉ là kiểm tra giả định bổ sung; không tự dùng làm khuyến nghị vận hành ca đêm hoặc bảo đảm SLA.
 """)
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -780,9 +780,9 @@ md(r"""
 * **$\rho_{max}$ chỉ là kịch bản**: cùng một mức $\rho$, đội xe nhỏ (ca đêm) rủi ro hết xe cao hơn đội xe lớn. Bảng 7.3 (Erlang B) cho thấy mức chênh.
 * **Chi phí là tương đối** (đơn vị xe-giờ), chưa phải tiền thật. Xếp hạng chỉ mô tả tập kiểm tra và kịch bản hiện tại, không phải bảo đảm cho tương lai.
 * **Mốc lập ca**: tại 00:00 cho các ca trong cùng ngày, chưa mô phỏng thông báo lịch trước ca. Chỉ chấm ca đủ giờ; phần cuối thiếu dữ liệu được ghi rõ, không thay bằng 0.
-* **Cận trên P90 của các nguồn được tạo khác nhau** (SARIMAX dùng khoảng tin cậy của mô hình; LSTM và Profile dùng phân vị thực nghiệm năm 2025). Xem cột "Độ phủ P90" ở Bước 1 để biết cận trên nào đúng mức hơn.
+* **Cận trên P90 của các nguồn được tạo khác nhau** (SARIMAX dùng đầu trên khoảng dự báo 80%; LSTM/Prophet cộng phân vị sai số validation theo giờ, còn Profile dùng phân vị trực tiếp của target 2025). Xem cột "Độ phủ P90" ở Bước 1 để biết cận trên nào đúng mức hơn.
 * **Mốc fit tham số**: SARIMAX 24h, LSTM và Prophet học đến hết 2024; SARIMAX không refit bằng validation 2025. Quan sát lịch sử 2025 được dùng để cập nhật trạng thái/đặc trưng trước test 2026.
-* Chưa mô hình hóa vị trí trạm, thời gian di chuyển, hay ưu tiên cuộc gọi; số xe ở đây là **số xe sẵn sàng toàn thành phố**.
+* Chưa mô hình hóa vị trí trạm, thời gian di chuyển hoặc ưu tiên cuộc gọi; số xe ở đây là nhu cầu đối chiếu theo công thức, chưa phải roster hay số xe sẵn sàng thực tế.
 """)
 
 nb = nbf.v4.new_notebook()

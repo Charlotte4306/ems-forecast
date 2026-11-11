@@ -1,84 +1,58 @@
-# Web demo trên Azure VPS hiện có
+# Triển khai EMSForecast
 
-Ứng dụng dùng HTML/CSS/ES modules và server Python stdlib; không có npm build,
-Streamlit, framework hoặc thư viện mô hình cần cài trên VPS. Môi trường mô hình
-chỉ cần để xuất lại bộ dữ liệu sau khi thay checkpoint/dữ liệu.
+Web server dùng Python stdlib và snapshot đã tạo offline. Worker dự báo bảy ngày chạy riêng, cần môi trường Prophet/pandas/tzdata theo `requirements-live.txt`. Web không cần Torch hoặc checkpoint, nhưng worker vẫn thực hiện fit Prophet mỗi ngày.
 
-## Chạy trên Windows
+## Kiểm tra trước khi đóng gói
 
-Tại repo, dùng bộ dataset đã lưu hoặc tạo lại bằng môi trường ML:
+Tại repo root:
 
 ```powershell
-.\.venv\Scripts\python.exe -m ems.web.export
 python -m ems.web
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+node --test tests/*.test.mjs
+node tests/test_web_operations.mjs
 ```
 
-Mở `http://127.0.0.1:8501`. Export chỉ nạp checkpoint LSTM và kết quả Prophet
-đã commit, không train hoặc fit lại scalers. Bộ dữ liệu công khai nằm ở
-`outputs/web/dataset.json`, gồm nguồn và hash của các file liên quan.
+Snapshot `outputs/web/dataset.json` phải có đủ ba profile 24h và dữ liệu kế hoạch xe. Tạo lại theo [web/OPERATIONS.md](../web/OPERATIONS.md) nếu thay artifact. Chủ repo tự review, commit và push thay đổi cần xuất bản.
 
-Các mốc giờ được giữ nguyên dạng CSV; không tự quy đổi sang giờ Việt Nam.
-
-## Đưa code lên VPS
-
-Chủ repo tự commit/push `feat/demo`, gồm cả `outputs/web/dataset.json` và font.
-Các lệnh dưới đây chạy trong Ubuntu VPS đã clone repository:
-
-```bash
-cd ~/apps/ems-forecast
-git fetch origin
-git switch feat/demo
-git pull --ff-only origin feat/demo
-python3 --version
-python3 -m ems.web
-```
-
-Mở một SSH khác và kiểm tra `curl -fsS http://127.0.0.1:8501/health`.
-Không cần `.venv`, pip hoặc tải lại checkpoint để phục vụ giao diện.
-Muốn xem thử qua máy Windows, dùng SSH tunnel:
+## Release bất biến
 
 ```powershell
-ssh -i "C:\Users\Charlote\.ssh\vm-emsforecast_key.pem" -L 8502:127.0.0.1:8501 charlotte@20.198.177.172
+python deploy/package_release.py
 ```
 
-Truy cập `http://127.0.0.1:8502`. Dừng tiến trình chạy thử bằng Ctrl+C trước khi
-bật service.
+Lệnh in `release`, đường dẫn archive và SHA-256; tạo `deploy/<release>.tar.gz` cùng `deploy/release-manifest.json`. Các file này là sản phẩm build và được gitignore. Gói chứa web assets, server, snapshot lịch sử, worker và unit update; không chứa toàn bộ dữ liệu nghiên cứu hoặc Torch weights.
 
-## Service và Caddy
-
-Đối chiếu user/thư mục trong `deploy/emsforecast.service` nếu đổi vị trí clone.
+Hạ tầng hiện tại dùng `/home/charlotte/apps/emsforecast-releases`. Upload archive bằng SSH/SCP vào thư mục này. Trên VPS, truyền **tên release và SHA-256 đúng từ bước đóng gói** cho `activate_release.py`, theo giao thức stdin được ghi ở đầu script:
 
 ```bash
-cd ~/apps/ems-forecast
-sudo install -m 644 deploy/emsforecast.service /etc/systemd/system/emsforecast.service
-sudo systemctl daemon-reload
-sudo systemctl enable --now emsforecast
+# From the repository copy available on the VPS:
+python3 - RELEASE_NAME ARCHIVE_SHA256 < deploy/activate_release.py
+```
+
+Script dành cho VPS hiện có và user `charlotte`, không phải installer đa nền tảng. Nó kiểm tra checksum/đường dẫn archive, bung sang thư mục mới, chạy `verify_release.py`, cập nhật service, kiểm tra health/asset và hoàn nguyên service nếu kích hoạt lỗi. Symlink `/home/charlotte/apps/emsforecast-current` được cập nhật sau khi web healthy. Không dùng `git pull feat/demo` làm quy trình triển khai release.
+
+`activate_release.py` cần quyền `sudo -n` phù hợp trên VPS. `verify_release.py` kiểm tra manifest và HTTP bằng stdlib, chỉ chạy trong release đã giải nén có `release-manifest.json` ở root. Nó không thay thế kiểm thử nghiệp vụ trước khi đóng gói.
+
+## Dữ liệu và service
+
+| Thành phần | Đường dẫn hiện tại |
+| --- | --- |
+| Code hiện hành | `/home/charlotte/apps/emsforecast-current` |
+| JSON worker dùng chung | `/home/charlotte/apps/emsforecast-live` |
+| Python worker | `/home/charlotte/apps/emsforecast-live-venv/bin/python` |
+| Biến môi trường web | `EMS_LIVE_DIR=/home/charlotte/apps/emsforecast-live` |
+
+Dữ liệu worker ở ngoài release nên đổi code không xóa lịch sử tải/forecast. Cài requirements-live vào venv worker và đối chiếu đường dẫn/user trong unit nếu dựng hạ tầng mới. Unit web/Caddy trong repo là mẫu theo hạ tầng hiện tại; kiểm tra cấu hình thực trước khi thay thế. Caddy chuyển tiếp đến loopback 8501; giữ nguyên các site block khác khi sửa proxy.
+
+Timer chạy 07:00 America/Los_Angeles, random tối đa năm phút, persistent sau reboot. Unit update gọi worker từ symlink code hiện hành. Tránh đổi code worker giữa một refresh đang chạy.
+
+```bash
 curl -fsS http://127.0.0.1:8501/health
+curl -fsS https://emsforecast.live/api/live-forecast
+systemctl list-timers emsforecast-update.timer
+sudo journalctl -u emsforecast -n 50 --no-pager
+sudo journalctl -u emsforecast-update.service -n 50 --no-pager
 ```
 
-Chỉ chuyển Caddy khi health check trả `ok`:
-
-```bash
-sudo cp /etc/caddy/Caddyfile /etc/caddy/Caddyfile.before-ems-demo
-sudo caddy validate --config deploy/Caddyfile --adapter caddyfile
-sudo install -m 644 deploy/Caddyfile /etc/caddy/Caddyfile
-sudo systemctl reload caddy
-curl -I https://emsforecast.live
-```
-
-File mẫu chứa hai host hiện có. Nếu Caddy đã có site block khác, giữ các block
-đó. Chỉ mở cổng web 80/443; ứng dụng ở loopback 8501.
-
-## Cập nhật / xem lỗi
-
-```bash
-cd ~/apps/ems-forecast
-git pull --ff-only
-sudo systemctl restart emsforecast
-sudo journalctl -u emsforecast -n 60 --no-pager
-```
-
-Server chỉ cung cấp asset frontend, dataset công khai và health; không cung cấp
-file nguồn Python hay checkpoint. Server ThreadingHTTPServer phục vụ demo lớp
-học sau Caddy; khi phát triển thành dịch vụ thực tế cần bổ sung nền tảng API,
-giám sát và các yêu cầu vận hành tương ứng.
+Để rollback web, khôi phục `previous-emsforecast.service` được lưu trong release mới rồi daemon-reload/restart. Symlink code, timer và worker cần rollback đồng bộ riêng; script không tự hoàn nguyên toàn bộ hệ thống worker. Xem [LIVE-FORECAST.md](LIVE-FORECAST.md) về target, lịch cập nhật và hồ sơ release đã kiểm chứng.
