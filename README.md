@@ -59,6 +59,26 @@ Fit bốn cấu hình trên train, chọn theo MAE validation, đánh giá test 
 artifact trong `checkpoints/prophet/`, `outputs/prophet/`.
 Xem [báo cáo Prophet](reports/prophet.md).
 
+Dự báo trước cả ngày từ checkpoint hiện có, không huấn luyện lại:
+
+```powershell
+.\.venv\Scripts\python.exe main.py prophet --forecast-24h
+```
+
+Kết quả lưu riêng tại `outputs/prophet/day_ahead_24h/test/`. Các lag, rolling và
+EWM được cập nhật bằng dự báo trong mỗi khối; chỉ nhận thực tế sau cả ngày.
+Có thể thử nhanh với `--forecast-split val --max-days 2`.
+Lệnh trên đánh giá bổ sung checkpoint đã chọn theo chế độ một giờ.
+Để huấn luyện và chọn riêng bốn cấu hình theo MAE validation 24 giờ, không đánh giá test:
+
+```powershell
+.\.venv\Scripts\python.exe main.py prophet --select-24h
+```
+
+Checkpoint mới được lưu riêng tại `checkpoints/prophet/day_ahead_24h/`;
+bảng so sánh tại `outputs/prophet/day_ahead_24h/selection/`. Xem
+[quy trình và giới hạn dự báo 24 giờ](reports/prophet_24h.md).
+
 ## Chạy SARIMAX
 
 Đánh giá CSV đã có và tạo lại bảng chi phí, lịch nhân sự, bốn biểu đồ; không huấn luyện:
@@ -87,6 +107,20 @@ Có thể đổi vị trí bằng `--output-dir` và `--checkpoint-dir`.
 Đây là mô phỏng nhân sự điều phối theo giờ; không phải tối ưu số xe cứu thương.
 SARIMAX dùng chân trời và dữ liệu fit cuối khác Prophet/LSTM; xem
 [quy trình và giới hạn so sánh](reports/sarimax.md).
+
+## Chuẩn bị thời gian xe MEDIC bận từ raw
+
+Module độc lập dùng chung cho phần năng lực xe, không thay đổi dữ liệu dự báo:
+
+```powershell
+.\.venv\Scripts\python.exe -m ems.capacity.prepare_busy_time --raw-files "C:\duong-dan-raw\sf_ems_2025.csv" "C:\duong-dan-raw\sf_ems_2026.csv"
+```
+
+Thay đường dẫn bằng vị trí raw thực tế. Kết quả tại `outputs/capacity/medic_busy_time/`:
+thời lượng từng lượt, các cờ kiểm tra, tham số lịch sử, khoảng bận đã gộp theo xe
+và khối lượng xe bận theo giờ. Mặc định hiệu chỉnh từ 2025 cho thời điểm dự báo
+từ đầu 2026; không dùng ngược cho validation 2025. Xem
+[quy tắc xử lý và kết quả kiểm tra](reports/medic_busy_time.md).
 
 ## Chạy LSTM
 

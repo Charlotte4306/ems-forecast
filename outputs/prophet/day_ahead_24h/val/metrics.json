@@ -1,0 +1,235 @@
+{
+  "experiment": "prophet_day_ahead_24h",
+  "split": "val",
+  "target": "MEDIC dispatch-response rows per call-received hour (legacy column: call_count)",
+  "horizon_hours": 24,
+  "issue_time": "00:00 after observing the previous 23:00 bucket",
+  "protocol": "Frozen checkpoint; recursive lag/rolling/EWM within each day; actuals revealed only after the full day; no refitting.",
+  "model_selection": "Reuses existing checkpoint; this run does NOT select hyperparameters for 24-hour forecasting.",
+  "comparability": "Compare only identical issue times, evaluated hours, training/refit policies and metrics. This run alone does not harmonize other models.",
+  "time_convention": "Naive hourly timestamps from source CSV; no timezone conversion.",
+  "checkpoint_fit_end": "2024-12-31 23:00:00",
+  "observation_cutoff_at_first_origin": "2024-12-31 23:00:00",
+  "evaluation_start": "2025-01-01 00:00:00",
+  "evaluation_end": "2025-12-31 23:00:00",
+  "n_hours": 8760,
+  "n_days": 365,
+  "incomplete_tail_hours_excluded": 0,
+  "max_days": null,
+  "checkpoint_sha256": "e8b6f650688e867d241296ea0ce2dc1aa7aae76ec48ea9a0b05cdf03044a0a16",
+  "metrics": {
+    "MAE": 3.10592812675724,
+    "RMSE": 3.99287615607707,
+    "MAPE (%)": 36.015294891868365,
+    "R2": 0.4022577233147371
+  },
+  "seasonal_naive_168h": {
+    "MAE": 4.181164383561644,
+    "RMSE": 5.395573612867509,
+    "MAPE (%)": 45.80072875419787,
+    "R2": -0.09148441038832944
+  },
+  "by_lead_hour": [
+    {
+      "lead_hour": 1,
+      "n_hours": 365,
+      "MAE": 2.734667799689883,
+      "RMSE": 3.5220233477409617,
+      "MAPE (%)": 44.62633125408072,
+      "R2": 0.07406679313007292
+    },
+    {
+      "lead_hour": 2,
+      "n_hours": 365,
+      "MAE": 2.8283962855228686,
+      "RMSE": 3.7354846387340075,
+      "MAPE (%)": 52.83810196660431,
+      "R2": 0.05639540973868473
+    },
+    {
+      "lead_hour": 3,
+      "n_hours": 365,
+      "MAE": 2.5748409915042623,
+      "RMSE": 3.5005744362045923,
+      "MAPE (%)": 51.33435760535466,
+      "R2": 0.06907114861708463
+    },
+    {
+      "lead_hour": 4,
+      "n_hours": 365,
+      "MAE": 2.36204944352466,
+      "RMSE": 2.979828815486823,
+      "MAPE (%)": 64.09972849644535,
+      "R2": 0.030423261371272492
+    },
+    {
+      "lead_hour": 5,
+      "n_hours": 365,
+      "MAE": 2.184817127499461,
+      "RMSE": 2.7061275621656935,
+      "MAPE (%)": 53.07651823396219,
+      "R2": 0.006406352962766482
+    },
+    {
+      "lead_hour": 6,
+      "n_hours": 365,
+      "MAE": 2.2856862216612677,
+      "RMSE": 3.008070964027964,
+      "MAPE (%)": 44.07556241100834,
+      "R2": -0.07216759589020949
+    },
+    {
+      "lead_hour": 7,
+      "n_hours": 365,
+      "MAE": 2.423678645109711,
+      "RMSE": 3.0283012003315797,
+      "MAPE (%)": 38.39066534221469,
+      "R2": -0.0590833117544034
+    },
+    {
+      "lead_hour": 8,
+      "n_hours": 365,
+      "MAE": 2.578978898791727,
+      "RMSE": 3.2889038936803185,
+      "MAPE (%)": 34.988353847399736,
+      "R2": -0.0474441987409846
+    },
+    {
+      "lead_hour": 9,
+      "n_hours": 365,
+      "MAE": 3.00573121430514,
+      "RMSE": 3.870180858453876,
+      "MAPE (%)": 28.919546429624678,
+      "R2": -0.05992572287585407
+    },
+    {
+      "lead_hour": 10,
+      "n_hours": 365,
+      "MAE": 3.573917596405557,
+      "RMSE": 4.478545196190389,
+      "MAPE (%)": 28.88182803620743,
+      "R2": -0.05873306235504905
+    },
+    {
+      "lead_hour": 11,
+      "n_hours": 365,
+      "MAE": 3.853283522281286,
+      "RMSE": 4.810395294261715,
+      "MAPE (%)": 28.00209925601035,
+      "R2": -0.07746003305200588
+    },
+    {
+      "lead_hour": 12,
+      "n_hours": 365,
+      "MAE": 3.4104445197068847,
+      "RMSE": 4.39484658744937,
+      "MAPE (%)": 27.09921910933189,
+      "R2": 0.01587791997967347
+    },
+    {
+      "lead_hour": 13,
+      "n_hours": 365,
+      "MAE": 3.355892659149376,
+      "RMSE": 4.3863299149624355,
+      "MAPE (%)": 24.003626990142283,
+      "R2": -0.03311650280830514
+    },
+    {
+      "lead_hour": 14,
+      "n_hours": 365,
+      "MAE": 3.883923178120794,
+      "RMSE": 4.965770435262223,
+      "MAPE (%)": 26.370840807333312,
+      "R2": -0.04780364149997718
+    },
+    {
+      "lead_hour": 15,
+      "n_hours": 365,
+      "MAE": 3.5898542798038937,
+      "RMSE": 4.485376023807085,
+      "MAPE (%)": 28.111943372269266,
+      "R2": 0.0005234624946147681
+    },
+    {
+      "lead_hour": 16,
+      "n_hours": 365,
+      "MAE": 3.80049312014157,
+      "RMSE": 4.735646935092307,
+      "MAPE (%)": 29.06537180126167,
+      "R2": 0.02445252100865436
+    },
+    {
+      "lead_hour": 17,
+      "n_hours": 365,
+      "MAE": 3.507212290756653,
+      "RMSE": 4.457212217316375,
+      "MAPE (%)": 27.223730354543967,
+      "R2": 0.012003962648664102
+    },
+    {
+      "lead_hour": 18,
+      "n_hours": 365,
+      "MAE": 3.571078552895819,
+      "RMSE": 4.595085343819065,
+      "MAPE (%)": 26.434038458178126,
+      "R2": 0.01635211916187962
+    },
+    {
+      "lead_hour": 19,
+      "n_hours": 365,
+      "MAE": 3.594852231046846,
+      "RMSE": 4.445115234564358,
+      "MAPE (%)": 29.5619731618867,
+      "R2": 0.012299595980799993
+    },
+    {
+      "lead_hour": 20,
+      "n_hours": 365,
+      "MAE": 3.2608712256978105,
+      "RMSE": 4.130892894840843,
+      "MAPE (%)": 31.781528373367625,
+      "R2": -0.07084464267519341
+    },
+    {
+      "lead_hour": 21,
+      "n_hours": 365,
+      "MAE": 3.0947579722286838,
+      "RMSE": 3.8036804892882317,
+      "MAPE (%)": 32.3713655908322,
+      "R2": -0.05140997511264911
+    },
+    {
+      "lead_hour": 22,
+      "n_hours": 365,
+      "MAE": 3.1693189187482247,
+      "RMSE": 3.9227384152898948,
+      "MAPE (%)": 35.706786332506084,
+      "R2": -0.005598777809791011
+    },
+    {
+      "lead_hour": 23,
+      "n_hours": 365,
+      "MAE": 2.989680725889448,
+      "RMSE": 3.7157792004556267,
+      "MAPE (%)": 38.92250148703685,
+      "R2": -0.007064510220227138
+    },
+    {
+      "lead_hour": 24,
+      "n_hours": 365,
+      "MAE": 2.9078476216919196,
+      "RMSE": 3.6579660267156373,
+      "MAPE (%)": 39.06817053258062,
+      "R2": 0.022189777755797113
+    }
+  ],
+  "data_sha256": {
+    "X_train.csv": "915a4349a11c7457da4bfa1215d3e68084f98d4c646014722eaef220bef2fd06",
+    "X_val.csv": "437b4b46955b8fd9d71d99d22e6d83744fb74e549611ca4506efcf560a4ccbda",
+    "X_test.csv": "98ed90ee0c31a5af34628539d43ca519c3b302d93c5e4eec290f6c777ff5cfea",
+    "y_train.csv": "5512467f0e78d5d8a0e19b62872c3dd6c8a625064e1417f552863abc340bf938",
+    "y_val.csv": "b6011825c814b64923e921a77dffd77f99a0f0d831e6604d631471beed762d27",
+    "y_test.csv": "46ff77c361917325e3ca93cab2b49b9dd8d53866daa6535a86e9d55892e64f96"
+  },
+  "elapsed_seconds": 8.892548399999214
+}
